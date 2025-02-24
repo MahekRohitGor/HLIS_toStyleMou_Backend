@@ -665,6 +665,46 @@ class userModel {
             });
         }
     }
+
+    async follow_user(request_data, user_id, callback) {
+        try {
+            const { follow_id } = request_data;
+    
+            if (!follow_id) {
+                return callback({
+                    code: response_code.BAD_REQUEST,
+                    message: "Follow ID is required",
+                });
+            }
+    
+            const checkFollowQuery = "SELECT * FROM tbl_follow WHERE user_id = ? AND follow_id = ?";
+            const [existingFollow] = await database.query(checkFollowQuery, [user_id, follow_id]);
+    
+            if (existingFollow.length > 0) {
+                return callback({
+                    code: response_code.ALREADY_EXISTS,
+                    message: "You are already following this user",
+                });
+            }
+    
+            const followQuery = "INSERT INTO tbl_follow (user_id, follow_id) VALUES (?, ?)";
+            await database.query(followQuery, [user_id, follow_id]);
+    
+            return callback({
+                code: response_code.SUCCESS,
+                message: "User followed successfully",
+            });
+    
+        } catch (error) {
+            return callback({
+                code: response_code.OPERATION_FAILED,
+                message: "Error occurred while following user",
+                data: error.message || error,
+            });
+        }
+    }
+    
+    
     
 }
 

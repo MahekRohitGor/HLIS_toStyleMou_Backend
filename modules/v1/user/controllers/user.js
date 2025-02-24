@@ -74,6 +74,12 @@ class User{
         });
     }
     
+    async follow_user(req,res){
+        var request_data = req.body;
+        userModel.follow_user(request_data, request_data.user_id, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
     
 
 }
