@@ -80,7 +80,25 @@ class User{
             common.response(res, _response_data);
         });
     }
-    
+    async rate_post(req,res){
+        var request_data = req.body;
+        userModel.rate_post(request_data, request_data.user_id, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
+    async get_profile(req,res){
+        var request_data = req.body;
+        userModel.get_profile(request_data, request_data.user_id, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
+    async get_other_profile(req,res){
+        var request_data = req.body;
+        var user_id = req.params.id;
+        userModel.get_other_profile(request_data, user_id, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
 
 }
 
