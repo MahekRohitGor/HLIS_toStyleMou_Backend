@@ -7,6 +7,10 @@ const user = (app) =>{
     app.post("/v1/user/logout", User.logout);
     app.post("/v1/user/forgot-pass", User.forgot_password);
     app.post("/v1/user/reset-pass", User.reset_password);
+    app.post("/v1/user/complete-profile", User.complete_profile);
+    app.post("/v1/user/trending-posts", User.trending_posts);
+    app.post("/v1/user/add-post", User.add_post);
+    app.post("/v1/user/get-rank", User.get_post_ranks);
 }
 
 module.exports = user;

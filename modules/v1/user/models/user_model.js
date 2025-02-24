@@ -355,6 +355,281 @@ class userModel {
             });
         }
     }
+
+    async complete_profile(requested_data, user_id, callback) {
+        try {
+            const userFetchQuery = "SELECT is_profile_completed FROM tbl_user WHERE user_id = ?";
+            const [result] = await database.query(userFetchQuery, [user_id]);
+
+            if (result[0].is_profile_completed === 1) {
+                return callback({
+                    code: response_code.SUCCESS,
+                    message: "Profile is already complete",
+                });
+            } else{
+
+                const { user_full_name, date_of_birth } = requested_data;
+
+            if (!user_id || !user_full_name || !date_of_birth) {
+                return callback({
+                    code: response_code.OPERATION_FAILED,
+                    message: "All fields are required",
+                });
+            }
+    
+            if (result.length === 0) {
+                return callback({
+                    code: response_code.NOT_FOUND,
+                    message: "User not found",
+                });
+            }
+
+            const updateProfileQuery = `
+                UPDATE tbl_user 
+                SET user_full_name = ?, date_of_birth = ?, is_profile_completed = 1
+                WHERE user_id = ?`;
+            
+            await database.query(updateProfileQuery, [user_full_name, date_of_birth, user_id]);
+    
+            const fetchUpdatedUserQuery = "SELECT * FROM tbl_user WHERE user_id = ?";
+            const [updatedUser] = await database.query(fetchUpdatedUserQuery, [user_id]);
+    
+            return callback({
+                code: response_code.SUCCESS,
+                message: "Profile completed successfully",
+                data: updatedUser[0],
+            });
+
+            }
+    
+        } catch (error) {
+            return callback({
+                code: response_code.OPERATION_FAILED,
+                message: error.sqlMessage || "Error updating profile",
+            });
+        }
+    }
+
+    async add_post(request_data, callback) {
+        try {
+            const { descriptions, expire_timer, post_type, category_id, user_id, media_names, tags } = request_data;
+    
+            if (!descriptions || !post_type || !category_id || !user_id || !media_names || media_names.length === 0) {
+                return callback({
+                    code: response_code.OPERATION_FAILED,
+                    message: "Missing required fields or media files",
+                });
+            }
+    
+            const mediaInsertQuery = "INSERT INTO tbl_image (image_name) VALUES ?";
+            const mediaValues = media_names.map(name => [name]);
+            const [mediaResult] = await database.query(mediaInsertQuery, [mediaValues]);
+    
+            const media_ids = [];
+            for (let i = 0; i < media_names.length; i++) {
+                media_ids.push(mediaResult.insertId + i);
+            }
+    
+            const postInsertQuery = `
+                INSERT INTO tbl_post (descriptions, expire_timer, share_cnt, avg_rating, post_type, category_id, user_id)
+                VALUES (?, ?, 0, 0, ?, ?, ?)`;
+            const [postResult] = await database.query(postInsertQuery, [descriptions, expire_timer, post_type, category_id, user_id]);
+    
+            const post_id = postResult.insertId;
+    
+            const postMediaRelationQuery = "INSERT INTO tbl_post_image_relation (post_id, image_id) VALUES ?";
+            const postMediaValues = media_ids.map(media_id => [post_id, media_id]);
+            await database.query(postMediaRelationQuery, [postMediaValues]);
+    
+            if (post_type === "toStyleCompare") {
+                const subPostInsertQuery = `
+                    INSERT INTO tbl_sub_post (post_id, image_id, avg_rating)
+                    VALUES ?`;
+                const subPostValues = media_ids.map(img_id => [post_id, img_id, 0.0]);
+                await database.query(subPostInsertQuery, [subPostValues]);
+            }
+    
+            if (tags && tags.length > 0) {
+                for (let tag of tags) {
+                    let tag_id;
+    
+                    const [existingTag] = await database.query("SELECT tag_id FROM tbl_tags WHERE tags = ?", [tag]);
+    
+                    if (existingTag.length > 0) {
+                        tag_id = existingTag[0].tag_id;
+                        await database.query("UPDATE tbl_tags SET tags_cnt = tags_cnt + 1 WHERE tag_id = ?", [tag_id]);
+                    } else {
+                        const [newTag] = await database.query("INSERT INTO tbl_tags (tags, tags_cnt) VALUES (?, 1)", [tag]);
+                        tag_id = newTag.insertId;
+                    }
+    
+                    await database.query("INSERT INTO tbl_post_tag (post_id, tag_id) VALUES (?, ?)", [post_id, tag_id]);
+                }
+            }
+    
+            const fetchPostQuery = `
+                SELECT p.post_id, p.descriptions, p.expire_timer, p.post_type, p.category_id, p.user_id,
+                       GROUP_CONCAT(i.image_name) AS media_files,
+                       GROUP_CONCAT(t.tags) AS tags
+                FROM tbl_post p
+                LEFT JOIN tbl_post_image_relation pi ON pi.post_id = p.post_id
+                LEFT JOIN tbl_image i ON i.image_id = pi.image_id
+                LEFT JOIN tbl_post_tag pt ON pt.post_id = p.post_id
+                LEFT JOIN tbl_tags t ON t.tag_id = pt.tag_id
+                WHERE p.post_id = ?
+                GROUP BY p.post_id
+            `;
+            const [createdPost] = await database.query(fetchPostQuery, [post_id]);
+    
+            return callback({
+                code: response_code.SUCCESS,
+                message: "Post added successfully",
+                data: createdPost[0],
+            });
+    
+        } catch (error) {
+            return callback({
+                code: response_code.OPERATION_FAILED,
+                message: error.sqlMessage || "Error adding post",
+            });
+        }
+    }
+
+    async get_post_ranks(request_data, user_id, callback) {
+        try {
+            const { post_id } = request_data;
+    
+            if (!post_id) {
+                return callback({
+                    code: response_code.BAD_REQUEST,
+                    message: "post_id is required"
+                });
+            }
+
+            const postOwnerQuery = `SELECT p.user_id, p.expire_timer FROM tbl_post p inner join tbl_user u on u.user_id = p.user_id WHERE p.post_id = ? and u.is_login = 1`;
+            const [postDetails] = await database.query(postOwnerQuery, [post_id]);
+
+            if (postDetails.length === 0) {
+                return callback({
+                    code: response_code.NOT_FOUND,
+                    message: "Post not found or Login Required"
+                });
+            }
+    
+            const { user_id: owner_id, expire_timer } = postDetails[0];
+            const isExpired = new Date() > new Date(expire_timer);
+            if (user_id && user_id === owner_id && isExpired) {
+                const rankQuery = `
+                SELECT 
+                    sp.image_id,
+                    sp.avg_rating,
+                    RANK() OVER (ORDER BY sp.avg_rating DESC) AS rank_no
+                FROM tbl_sub_post sp
+                INNER JOIN tbl_post p ON p.post_id = sp.post_id
+                WHERE sp.post_id = ? AND NOW() > p.expire_timer
+            `;
+    
+            const [rankResults] = await database.query(rankQuery, [post_id]);
+            
+            return callback({
+                code: response_code.SUCCESS,
+                message: "Rankings fetched successfully",
+                data: rankResults
+            });
+
+            } else{
+                const normalPostQuery = `
+                SELECT 
+                    p.post_id,
+                    p.descriptions,
+                    p.expire_timer,
+                    p.share_cnt,
+                    p.avg_rating,
+                    p.post_type,
+                    i.image_name
+                FROM tbl_post p
+                LEFT JOIN tbl_post_image_relation pi ON pi.post_id = p.post_id
+                LEFT JOIN tbl_image i ON i.image_id = pi.image_id
+                WHERE p.post_id = ?
+            `;
+
+            const [normalPost] = await database.query(normalPostQuery, [post_id]);
+
+            return callback({
+                code: response_code.SUCCESS,
+                message: "Post details fetched successfully",
+                data: normalPost
+            });
+            }
+    
+        } catch (error) {
+            return callback({
+                code: response_code.OPERATION_FAILED,
+                message: error.sqlMessage || "Error fetching rankings"
+            });
+        }
+    }
+    
+
+    async trending_posts(request_data, callback) {
+        try {
+            const updateTrendingQuery = `
+                UPDATE tbl_post p
+                JOIN (
+                    SELECT post_id
+                    FROM (
+                        SELECT post_id, COUNT(rating_id) AS total_ratings, AVG(rating) AS avg_rating
+                        FROM tbl_rating
+                        GROUP BY post_id
+                        ORDER BY total_ratings DESC, avg_rating DESC
+                        LIMIT 3
+                    ) AS trending_post
+                ) tp ON p.post_id = tp.post_id
+                SET p.is_trending = 1
+                WHERE is_active = 1 AND is_deleted = 0
+            `;
+    
+            await database.query(updateTrendingQuery);
+    
+            const resetTrendingQuery = `
+                UPDATE tbl_post 
+                SET is_trending = 0 
+                WHERE post_id NOT IN (
+                    SELECT post_id FROM (
+                        SELECT post_id
+                        FROM tbl_rating
+                        GROUP BY post_id
+                        ORDER BY COUNT(rating_id) DESC, AVG(rating) DESC
+                        LIMIT 3
+                    ) AS trending
+                )
+            `;
+    
+            await database.query(resetTrendingQuery);
+    
+            const fetchTrendingPostsQuery = `
+                SELECT p.post_id, i.image_name
+                FROM tbl_post p
+                LEFT JOIN tbl_post_image_relation pi ON pi.post_id = p.post_id
+                LEFT JOIN tbl_image i ON i.image_id = pi.image_id
+                WHERE p.is_trending = 1 AND p.is_active = 1 AND p.is_deleted = 0
+            `;
+    
+            const [trendingPosts] = await database.query(fetchTrendingPostsQuery);
+    
+            return callback({
+                code: response_code.SUCCESS,
+                message: "Trending posts fetched successfully",
+                data: trendingPosts
+            });
+    
+        } catch (error) {
+            return callback({
+                code: response_code.OPERATION_FAILED,
+                message: error.sqlMessage || "Error fetching trending posts"
+            });
+        }
+    }
     
     
 }

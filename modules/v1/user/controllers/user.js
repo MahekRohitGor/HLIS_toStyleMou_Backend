@@ -39,6 +39,33 @@ class User{
         });
     }
 
+    async complete_profile(req,res){
+        var request_data = req.body;
+        userModel.complete_profile(request_data, request_data.user_id, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
+
+    async trending_posts(req,res){
+        var request_data = req.body;
+        userModel.trending_posts(request_data, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
+
+    async add_post(req,res){
+        var request_data = req.body;
+        userModel.add_post(request_data, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
+
+    async get_post_ranks(req,res){
+        var request_data = req.body;
+        userModel.get_post_ranks(request_data, request_data.user_id, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
     
     
 
