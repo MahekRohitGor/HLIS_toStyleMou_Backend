@@ -569,7 +569,6 @@ class userModel {
             });
         }
     }
-    
 
     async trending_posts(request_data, callback) {
         try {
@@ -631,6 +630,41 @@ class userModel {
         }
     }
     
+    async get_notifications(request_data, user_id, callback) {
+        try {
+            const selectUserQuery = "SELECT user_id FROM tbl_user WHERE is_login = 1 AND user_id = ?";
+            const [userResult] = await database.query(selectUserQuery, [user_id]);
+    
+            if (userResult.length === 0) {
+                return callback({
+                    code: response_code.OPERATION_FAILED,
+                    message: "Login Required or User not found",
+                });
+            }
+    
+            const getNotificationQuery = `
+                SELECT cover_image, title, descriptions 
+                FROM tbl_notification 
+                WHERE user_id = ? 
+                ORDER BY created_at DESC;
+            `;
+            const [notifications] = await database.query(getNotificationQuery, [user_id]);
+    
+            return callback({
+                code: response_code.SUCCESS,
+                message: notifications.length > 0 ? "Here are your notifications..." : "No notifications found",
+                data: notifications,
+            });
+    
+        } catch (error) {
+            console.error("Error fetching notifications:", error);
+            return callback({
+                code: response_code.OPERATION_FAILED,
+                message: "An error occurred while fetching notifications",
+                error: error.message
+            });
+        }
+    }
     
 }
 

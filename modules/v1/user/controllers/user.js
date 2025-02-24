@@ -66,6 +66,13 @@ class User{
             common.response(res, _response_data);
         });
     }
+
+    async get_notifications(req,res){
+        var request_data = req.body;
+        userModel.get_notifications(request_data, request_data.user_id, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
     
     
 
