@@ -18,7 +18,13 @@ class User{
         });
     }
 
-    
+    async logout(req,res){
+        var request_data = req.body;
+        userModel.logout(request_data, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
+
     
 
 }

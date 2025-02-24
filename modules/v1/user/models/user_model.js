@@ -227,7 +227,47 @@ class userModel {
                 message: error.sqlMessage || "SOME ERROR IN LOGIN"
             });
         }
+    }
 
+    async logout(request_data, callback){
+        try{
+            const user_id = request_data.user_id;
+            var select_user_query = "SELECT * FROM tbl_user WHERE user_id = ? and is_login = 1";
+            const [info] = await database.query(select_user_query, [user_id]);
+            if(info.length > 0){
+                const updateDeviceTokenQuery = "UPDATE tbl_device_info SET device_token = '', updated_at = NOW() WHERE user_id = ?";
+            const updateTokenQuery = "UPDATE tbl_user SET token = '', is_login = 0 WHERE user_id = ?";
+    
+            await Promise.all([
+                database.query(updateDeviceTokenQuery, [user_id]),
+                database.query(updateTokenQuery, [user_id])
+            ]);
+    
+            const getUserQuery = "SELECT user_id, user_name, email_id FROM tbl_user WHERE user_id = ?";
+            const [updatedUser] = await database.query(getUserQuery, [user_id]);
+    
+            return callback({
+                code: response_code.SUCCESS,
+                message: "Logout successful",
+                data: updatedUser[0]
+            });
+
+            } else{
+                return callback({
+                    code: response_code.NOT_FOUND,
+                    message: "Either user not found or already logged out..."
+                });
+            }
+
+        } catch(error){
+            return callback({
+                code: response_code.OPERATION_FAILED,
+                message: "Some error Occured...",
+                data: error
+            })
+        }
+
+        
     }
 }
 
