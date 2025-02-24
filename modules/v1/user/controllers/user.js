@@ -25,6 +25,21 @@ class User{
         });
     }
 
+    async forgot_password(req,res){
+        var request_data = req.body;
+        userModel.forgot_password(request_data, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
+
+    async reset_password(req,res){
+        var request_data = req.body;
+        userModel.reset_password(request_data, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
+
+    
     
 
 }

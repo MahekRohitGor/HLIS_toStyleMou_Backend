@@ -267,8 +267,96 @@ class userModel {
             })
         }
 
-        
     }
+
+    async forgot_password(requested_data, callback) {
+        const { email_id } = requested_data;
+        
+        if (!email_id) {
+            return callback({
+                code: response_code.OPERATION_FAILED,
+                message: "Email ID is required"
+            });
+        }
+        
+        try {
+            const userQuery = "SELECT * FROM tbl_user WHERE email_id = ?";
+            const [user] = await database.query(userQuery, [email_id]);
+            
+            if (!user.length) {
+                return callback({
+                    code: response_code.NOT_FOUND,
+                    message: "User not found"
+                });
+            }
+            
+            const reset_token = common.generateToken(10);
+            const expires_at = new Date(Date.now() + 3600000);
+            
+            const insertTokenQuery = `INSERT INTO tbl_forgot_password (email_id, reset_token, expires_at) VALUES (?, ?, ?)`;
+            await database.query(insertTokenQuery, [email_id, reset_token, expires_at]);
+            
+            return callback({
+                code: response_code.SUCCESS,
+                message: "Password reset token sent successfully"
+            });
+            
+        } catch (error) {
+            return callback({
+                code: response_code.OPERATION_FAILED,
+                message: error.sqlMessage || "Error in forgot password process"
+            });
+        }
+    }
+
+    async reset_password(requested_data, callback) {
+        const { reset_token, new_password } = requested_data;
+    
+        if (!reset_token || !new_password) {
+            return callback({
+                code: response_code.INVALID_REQUEST,
+                message: "Reset token and new password are required"
+            });
+        }
+    
+        try {
+            const selectTokenQuery = `
+                SELECT email_id FROM tbl_forgot_password 
+                WHERE reset_token = ? AND is_active = 1 AND expires_at > NOW()
+            `;
+    
+            const [result] = await database.query(selectTokenQuery, [reset_token]);
+    
+            if (!result.length) {
+                return callback({
+                    code: response_code.NOT_FOUND,
+                    message: "Invalid or expired reset token"
+                });
+            }
+    
+            const email_id = result[0].email_id;
+            const hashedPassword = md5(new_password);
+    
+            const updatePasswordQuery = "UPDATE tbl_user SET passwords = ? WHERE email_id = ?";
+            await database.query(updatePasswordQuery, [hashedPassword, email_id]);
+    
+            const deactivateTokenQuery = "UPDATE tbl_forgot_password SET is_active = 0 WHERE reset_token = ?";
+            await database.query(deactivateTokenQuery, [reset_token]);
+    
+            return callback({
+                code: response_code.SUCCESS,
+                message: "Password reset successfully"
+            });
+    
+        } catch (error) {
+            return callback({
+                code: response_code.OPERATION_FAILED,
+                message: error.sqlMessage || "Error resetting password"
+            });
+        }
+    }
+    
+    
 }
 
 module.exports = new userModel();
