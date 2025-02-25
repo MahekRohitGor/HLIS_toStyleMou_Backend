@@ -120,6 +120,41 @@ class User{
         });
     }
 
+    async save_post(req,res){
+        var request_data = req.body;
+        userModel.save_post(request_data, request_data.user_id, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
+
+    async show_saved_post(req,res){
+        var request_data = req.body;
+        userModel.show_saved_post(request_data, request_data.user_id, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
+
+    async add_comment(req,res){
+        var request_data = req.body;
+        userModel.add_comment(request_data, request_data.user_id, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
+
+    async show_post_comments(req,res){
+        var request_data = req.body;
+        userModel.show_post_comments(request_data, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
+
+    async delete_posts(req,res){
+        var request_data = req.body;
+        userModel.delete_posts(request_data, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
+
 }
 
 module.exports = new User();

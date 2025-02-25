@@ -1106,20 +1106,237 @@ class userModel {
 
     }
 
-    async add_comment(request_data, callback){
+    async save_post(request_data, user_id, callback){
+        try{
+
+            const {post_id} = request_data;
+
+            const checkQuery = "SELECT * FROM tbl_save WHERE post_id = ? AND user_id = ?";
+            const [existingSave] = await database.query(checkQuery, [post_id, user_id]);
+
+            if (existingSave.length > 0) {
+                const deleteQuery = "DELETE FROM tbl_save WHERE post_id = ? AND user_id = ?";
+                await database.query(deleteQuery, [post_id, user_id]);
+
+                return callback({
+                    code: response_code.SUCCESS,
+                    message: "Post unsaved successfully.",
+                });
+            } else {
+                const savePostQuery = "INSERT INTO tbl_save (is_save, post_id, user_id) VALUES (1,?,?)";
+                await database.query(savePostQuery, [post_id, user_id]);
+
+                return callback({
+                    code: response_code.SUCCESS,
+                    message: "Post saved successfully."
+                });
+            }
+            
+
+        } catch(error){
+            return callback({
+                code: response_code.OPERATION_FAILED,
+                message: "Some Error Occured",
+                data: error
+            });
+        }
+    }
+
+    async show_saved_post(request_data, user_id, callback){
+        try{
+
+            var checkUserLogin = "SELECT * FROM tbl_user WHERE user_id = ? and is_login = 1";
+            const [user] = await database.query(checkUserLogin, [user_id]);
+
+            if(user.length === 0){
+                return callback({
+                    code: response_code.OPERATION_FAILED,
+                    message: "Login Required"
+                });
+            } else{
+                var selectSavedPostQuery = `
+                    select
+                    u.user_id,
+                    p.post_id,
+                    u.profile_pic,
+                    u.user_full_name,
+                    c.category_name,
+                    im.image_name as POST_IMAGE,
+                    CONCAT(
+                            TIMESTAMPDIFF(DAY, p.created_at, CURRENT_TIMESTAMP()), ' days, ',
+                            MOD(TIMESTAMPDIFF(HOUR, p.created_at, CURRENT_TIMESTAMP()), 24), ' hours, ',
+                            MOD(TIMESTAMPDIFF(MINUTE, p.created_at, CURRENT_TIMESTAMP()), 60), ' minutes'
+                        ) AS time_elapsed,
+                        p.descriptions,
+                        p.comment_cnt,
+                        p.avg_rating,
+                        t.tags
+                    from
+                    tbl_save s
+                    inner join
+                    tbl_post p
+                    on s.post_id = p.post_id
+                    inner join
+                    tbl_category c
+                    on c.category_id = p.category_id
+                    inner join
+                    tbl_post_image_relation i
+                    on i.post_id = p.post_id
+                    inner join
+                    tbl_image im
+                    on im.image_id = i.image_id
+                    inner join
+                    tbl_user u
+                    on u.user_id = s.user_id
+                    inner join
+                    tbl_post_tag pt
+                    on pt.post_id = p.post_id
+                    inner join
+                    tbl_tags t
+                    on t.tag_id = pt.tag_id
+                    where s.user_id = ?;
+                `;
+
+                const [result] = await database.query(selectSavedPostQuery, [user_id]);
+
+                if(result.length === 0){
+                    return callback({
+                        code: response_code.OPERATION_FAILED,
+                        message: "NO SAVED POST"
+                    });
+                } else{
+                    return callback({
+                        code: response_code.SUCCESS,
+                        message: "SAVED POSTS",
+                        data: result
+                    });
+                }
+            }
+
+        } catch(error){
+            return callback({
+                code: response_code.OPERATION_FAILED,
+                message: "Error",
+                data: error
+            });
+
+        }
 
     }
 
-    async show_saved_post(request_data, callback){
+    async add_comment(request_data, user_id, callback){
+        try{
+            var checkUserLogin = "SELECT * FROM tbl_user WHERE user_id = ? and is_login = 1";
+            const [user] = await database.query(checkUserLogin, [user_id]);
 
+            if(user.length === 0){
+                return callback({
+                    code: response_code.OPERATION_FAILED,
+                    message: "Login Required"
+                });
+            } else{
+                const {post_id, comments} = request_data;
+                const query = "INSERT INTO tbl_comments (comments, user_id, post_id) VALUES (?,?,?)";
+                await database.query(query, [comments, user_id, post_id]);
+
+                const selectCommentQuery = "SELECT * from tbl_comments where user_id = ? and post_id = ?";
+                const [results] = await database.query(selectCommentQuery, [user_id, post_id]);
+
+                return callback({
+                    code: response_code.SUCCESS,
+                    message: "Comment Added Successfully...",
+                    data: results
+                });
+
+            }
+
+        } catch(error){
+            return callback({
+                code: response_code.OPERATION_FAILED,
+                message: "Error",
+                data: error
+            });
+        }
+    }
+
+    async show_post_comments(request_data, callback){
+        try{
+            const {post_id} = request_data;
+            var showCommentQuery = "SELECT * FROM tbl_comments where post_id = ?";
+            const [result] = await database.query(showCommentQuery, [post_id]);
+
+            if(result.length === 0){
+                return callback({
+                    code: response_code.NOT_FOUND,
+                    message: "No comments yet"
+                });
+            } else{
+                return callback({
+                    code: response_code.SUCCESS,
+                    message: "Comments are here",
+                    data: result
+                })
+            }
+
+        } catch(error){
+            return callback({
+                code: response_code.OPERATION_FAILED,
+                message: "Some Error Occured",
+                data: error
+            })
+        }
     }
 
     async delete_posts(request_data, callback){
+        try{
 
+            const {post_id, user_id} = request_data;
+            var checkQuery = "SELECT * FROM tbl_post WHERE post_id = ? AND user_id = ?";
+            const [post] = await database.query(checkQuery, [post_id, user_id]);
+
+            if (post.length === 0) {
+                return callback({
+                    code: response_code.NOT_FOUND,
+                    message: "Post not found or you are not authorized to delete it."
+                });
+            }
+
+            if (post[0].is_deleted === 1) {
+                return callback({
+                    code: response_code.SUCCESS,
+                    message: "Post is already deleted."
+                });
+            }
+
+            
+            const deletePostQuery = "UPDATE tbl_post SET is_deleted = 1, is_active = 0 WHERE post_id = ? AND user_id = ?";
+            await database.query(deletePostQuery, [post_id, user_id]);
+
+            const deleteImagesQuery = `
+                UPDATE tbl_image 
+                SET is_deleted = 1, is_active = 0 
+                WHERE image_id IN (
+                    SELECT image_id FROM tbl_post_image_relation WHERE post_id = ?
+                )
+            `;
+            await database.query(deleteImagesQuery, [post_id]);
+
+            return callback({
+                code: response_code.SUCCESS,
+                message: "Post and related images deleted successfully."
+            });
+
+        } catch(error){
+            return callback({
+                code: response_code.OPERATION_FAILED,
+                message: "Error Occured",
+                data: error
+            })
+        }
     }
 
     async contact_us(request_data, callback){
-
+        
     }
 
     async edit_profile(request_data, callback){

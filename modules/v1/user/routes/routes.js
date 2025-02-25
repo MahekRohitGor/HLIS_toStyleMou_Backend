@@ -21,6 +21,12 @@ const user = (app) =>{
     app.post("/v1/user/filter", User.filter);
     app.post("/v1/user/get-followers", User.get_followers);
     app.post("/v1/user/get-following", User.get_following);
+    app.post("/v1/user/save-post", User.save_post);
+    app.post("/v1/user/show-saved-post", User.show_saved_post);
+
+    app.post("/v1/user/add-comment", User.add_comment);
+    app.post("/v1/user/show-post-comment", User.show_post_comments);
+    app.post("/v1/user/delete-post", User.delete_posts);
 
 }
 
