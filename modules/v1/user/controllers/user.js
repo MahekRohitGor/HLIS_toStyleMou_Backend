@@ -99,6 +99,26 @@ class User{
             common.response(res, _response_data);
         });
     }
+    async filter(req,res){
+        var request_data = req.body;
+        userModel.filter(request_data, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
+
+    async get_followers(req,res){
+        var request_data = req.body;
+        userModel.get_followers(request_data, request_data.user_id, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
+
+    async get_following(req,res){
+        var request_data = req.body;
+        userModel.get_following(request_data, request_data.user_id, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
 
 }
 

@@ -861,6 +861,274 @@ class userModel {
         }
     }
     
+    async filter(request_data, callback){
+        const {filter_type, post_type} = request_data;
+        if(filter_type === "new"){
+            var query;
+            var queryParams = [];
+
+            if(post_type === "toStyleAll"){
+                query = `select
+                        p.post_id,
+                        i.image_name,
+                        p.post_type
+                        from tbl_post p
+                        left join
+                        tbl_post_image_relation pi
+                        on pi.post_id = p.post_id
+                        left join
+                        tbl_image i
+                        on i.image_id = pi.image_id
+                        where p.is_active = 1 and p.is_deleted = 0 and i.is_active = 1 and i.is_deleted = 0
+                        order by p.created_at limit 6;`;
+            } else{
+                query = `select
+                        p.post_id,
+                        i.image_name,
+                        p.post_type
+                        from tbl_post p
+                        left join
+                        tbl_post_image_relation pi
+                        on pi.post_id = p.post_id
+                        left join
+                        tbl_image i
+                        on i.image_id = pi.image_id
+                        where p.is_active = 1 and p.is_deleted = 0 and i.is_active = 1 and i.is_deleted = 0
+                        and p.post_type = ?
+                        order by p.created_at limit 3;`;
+                        queryParams.push(post_type);
+            }
+
+            const [results] = await database.query(query, queryParams);
+            if(results.length === 0){
+                return callback({
+                    code: response_code.NOT_FOUND,
+                    message: "NOT FOUND"
+                });
+            }
+            return callback({
+                code: response_code.SUCCESS,
+                message: "Here are posts...",
+                data: results
+            });
+
+        } else if(filter_type === "following"){
+            var query;
+            var queryParams = [];
+
+            if(post_type === "toStyleAll"){
+                query = `select
+                        p.post_id,
+                        i.image_name,
+                        p.post_type
+                        from tbl_post p
+                        left join
+                        tbl_post_image_relation pi
+                        on pi.post_id = p.post_id
+                        left join
+                        tbl_image i
+                        on i.image_id = pi.image_id
+                        where p.is_active = 1 and p.is_deleted = 0 and i.is_active = 1 and i.is_deleted = 0
+                        and
+                        p.user_id in (
+                            select f.follow_id from tbl_follow f where f.user_id = 1
+                        )
+                        order by p.created_at limit 3;`;
+            } else{
+                query = `select
+                        p.post_id,
+                        i.image_name,
+                        p.post_type
+                        from tbl_post p
+                        left join
+                        tbl_post_image_relation pi
+                        on pi.post_id = p.post_id
+                        left join
+                        tbl_image i
+                        on i.image_id = pi.image_id
+                        where p.is_active = 1 and p.is_deleted = 0 and i.is_active = 1 and i.is_deleted = 0
+                        and
+                        p.user_id in (
+                            select f.follow_id from tbl_follow f where f.user_id = 1
+                        )
+                        and post_type = ?
+                        order by p.created_at limit 3;
+                        `;
+                        queryParams.push(post_type);
+            }
+
+            const [results] = await database.query(query, queryParams);
+            if(results.length === 0){
+                return callback({
+                    code: response_code.NOT_FOUND,
+                    message: "NOT FOUND"
+                });
+            }
+            return callback({
+                code: response_code.SUCCESS,
+                message: "Here are posts...",
+                data: results
+            });
+
+        } else if(filter_type === "expiring"){
+            var query;
+            var queryParams = [];
+
+            if(post_type === "toStyleAll"){
+                query = `select
+                        p.post_id,
+                        i.image_name,
+                        p.post_type
+                        from tbl_post p
+                        left join
+                        tbl_post_image_relation pi
+                        on pi.post_id = p.post_id
+                        left join
+                        tbl_image i
+                        on i.image_id = pi.image_id
+                        where p.is_active = 1 and p.is_deleted = 0 and i.is_active = 1 and i.is_deleted = 0
+                        and
+                        expire_timer BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 1 YEAR)`;
+
+            } else{
+                query = `select
+                        p.post_id,
+                        i.image_name,
+                        p.post_type
+                        from tbl_post p
+                        left join
+                        tbl_post_image_relation pi
+                        on pi.post_id = p.post_id
+                        left join
+                        tbl_image i
+                        on i.image_id = pi.image_id
+                        where p.is_active = 1 and p.is_deleted = 0 and i.is_active = 1 and i.is_deleted = 0
+                        and
+                        expire_timer BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 1 YEAR)
+                        and post_type = ?;
+                        `;
+                        queryParams.push(post_type);
+            }
+
+            const [results] = await database.query(query, queryParams);
+            if(results.length === 0){
+                return callback({
+                    code: response_code.NOT_FOUND,
+                    message: "NOT FOUND"
+                });
+            }
+            return callback({
+                code: response_code.SUCCESS,
+                message: "Here are posts...",
+                data: results
+            });
+
+        } else{
+            return callback({
+                code: response_code.NOT_FOUND,
+                message: "Some Error"
+            });
+        }
+    }
+
+    async get_followers(requested_data, user_id ,callback){
+        try{
+
+            var getFollowerQuery = `
+            SELECT u.user_id, u.user_name, u.user_full_name
+            FROM tbl_follow f
+            JOIN tbl_user u ON f.user_id = u.user_id
+            WHERE f.follow_id = ? AND f.is_active = 1;
+            `;
+
+            const [results] = await database.query(getFollowerQuery, [user_id]);
+            console.log(results);
+
+            if(results.length === 0){
+                return callback({
+                    code: response_code.NOT_FOUND,
+                    message: "NO FOLLOWERS FOUND",
+                    data: results
+                });
+
+            } else{
+                return callback({
+                    code: response_code.SUCCESS,
+                    message: "Here are your followers...",
+                    data: results
+                });
+            }
+
+
+        } catch(error){
+            return callback({
+                code: response_code.OPERATION_FAILED,
+                message: error
+            })
+        }
+    }
+
+    async get_following(request_data, user_id, callback){
+        try{
+
+            var getFollowerQuery = `
+            SELECT u.user_id, u.user_name, u.user_full_name
+            FROM tbl_follow f
+            JOIN tbl_user u ON f.follow_id = u.user_id
+            WHERE f.user_id = ? AND f.is_active = 1;
+            `;
+
+            const [results] = await database.query(getFollowerQuery, [user_id]);
+            console.log(results);
+
+            if(results.length === 0){
+                return callback({
+                    code: response_code.NOT_FOUND,
+                    message: "NO FOLLOWING FOUND, TRY FOLLOW SOMEONE",
+                    data: results
+                });
+
+            } else{
+                return callback({
+                    code: response_code.SUCCESS,
+                    message: "Here are your following...",
+                    data: results
+                });
+            }
+
+
+        } catch(error){
+            return callback({
+                code: response_code.OPERATION_FAILED,
+                message: error
+            })
+        }
+
+    }
+
+    async add_comment(request_data, callback){
+
+    }
+
+    async show_saved_post(request_data, callback){
+
+    }
+
+    async delete_posts(request_data, callback){
+
+    }
+
+    async contact_us(request_data, callback){
+
+    }
+
+    async edit_profile(request_data, callback){
+
+    }
+
+    async change_pswd(request_data, callback){
+
+    }
     
 }
 

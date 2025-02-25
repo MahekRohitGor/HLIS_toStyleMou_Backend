@@ -18,6 +18,9 @@ const user = (app) =>{
     app.post("/v1/user/rate-post", User.rate_post);
     app.post("/v1/user/view-profile", User.get_profile);
     app.post("/v1/user/view-profile-other/:id", User.get_other_profile);
+    app.post("/v1/user/filter", User.filter);
+    app.post("/v1/user/get-followers", User.get_followers);
+    app.post("/v1/user/get-following", User.get_following);
 
 }
 
