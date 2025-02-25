@@ -1471,6 +1471,90 @@ class userModel {
             });
         }
     }
+
+    async report_post(request_data, user_id, callback) {
+        try {
+            const { post_id } = request_data;
+    
+            if (!post_id) {
+                return callback({
+                    code: response_code.BAD_REQUEST,
+                    message: "Post ID is required"
+                });
+            }
+    
+            const checkQuery = `SELECT report_p_id FROM report_post WHERE user_id = ? AND post_id = ? AND is_active = 1 AND is_deleted = 0`;
+            const [existingReport] = await database.query(checkQuery, [user_id, post_id]);
+    
+            if (existingReport.length > 0) {
+                return callback({
+                    code: response_code.ALREADY_EXISTS,
+                    message: "You have already reported this post"
+                });
+            }
+    
+            const insertQuery = `INSERT INTO report_post (user_id, post_id) VALUES (?, ?)`;
+            await database.query(insertQuery, [user_id, post_id]);
+    
+            return callback({
+                code: response_code.SUCCESS,
+                message: "Post reported successfully"
+            });
+    
+        } catch (error) {
+            return callback({
+                code: response_code.OPERATION_FAILED,
+                message: "Error reporting post",
+                data: error
+            });
+        }
+    }
+    
+    async report_profile(request_data, user_id, callback) {
+        try {
+            const { profile_reported_id } = request_data;
+    
+            if (!profile_reported_id) {
+                return callback({
+                    code: response_code.BAD_REQUEST,
+                    message: "Profile ID to report is required"
+                });
+            }
+    
+            if (user_id === profile_reported_id) {
+                return callback({
+                    code: response_code.BAD_REQUEST,
+                    message: "You cannot report your own profile"
+                });
+            }
+    
+            const checkQuery = `SELECT report_p_id FROM report_profile WHERE user_id = ? AND profile_reported_id = ? AND is_active = 1 AND is_deleted = 0`;
+            const [existingReport] = await database.query(checkQuery, [user_id, profile_reported_id]);
+    
+            if (existingReport.length > 0) {
+                return callback({
+                    code: response_code.ALREADY_EXISTS,
+                    message: "You have already reported this profile"
+                });
+            }
+    
+            const insertQuery = `INSERT INTO report_profile (user_id, profile_reported_id) VALUES (?, ?)`;
+            await database.query(insertQuery, [user_id, profile_reported_id]);
+    
+            return callback({
+                code: response_code.SUCCESS,
+                message: "Profile reported successfully"
+            });
+    
+        } catch (error) {
+            return callback({
+                code: response_code.OPERATION_FAILED,
+                message: "Error reporting profile",
+                data: error
+            });
+        }
+    }
+    
     
 }
 

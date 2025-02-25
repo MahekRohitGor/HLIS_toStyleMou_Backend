@@ -30,6 +30,8 @@ const user = (app) =>{
     app.post("/v1/user/add-comment", User.add_comment);
     app.post("/v1/user/show-post-comment", User.show_post_comments);
     app.post("/v1/user/delete-post", User.delete_posts);
+    app.post("/v1/user/report-profile", User.report_profile);
+    app.post("/v1/user/report-post", User.report_post);
 
 }
 

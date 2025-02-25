@@ -175,6 +175,20 @@ class User{
             common.response(res, _response_data);
         });
     }
+
+    async report_post(req,res){
+        var request_data = req.body;
+        userModel.report_post(request_data, request_data.user_id, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
+
+    async report_profile(req,res){
+        var request_data = req.body;
+        userModel.report_profile(request_data, request_data.user_id, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
 }
 
 module.exports = new User();
