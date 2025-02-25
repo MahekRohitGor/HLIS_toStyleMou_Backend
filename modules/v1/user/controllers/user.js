@@ -155,6 +155,26 @@ class User{
         });
     }
 
+    async change_pswd(req,res){
+        var request_data = req.body;
+        userModel.change_pswd(request_data, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
+
+    async edit_profile(req,res){
+        var request_data = req.body;
+        userModel.edit_profile(request_data, request_data.user_id, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
+
+    async contact_us(req,res){
+        var request_data = req.body;
+        userModel.contact_us(request_data, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
 }
 
 module.exports = new User();

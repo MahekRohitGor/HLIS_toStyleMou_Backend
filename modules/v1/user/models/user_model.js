@@ -1336,15 +1336,140 @@ class userModel {
     }
 
     async contact_us(request_data, callback){
-        
+        try{
+            const {full_name, email_id, subjects, descp} = request_data;
+            const insertDataQuery = "INSERT INTO tbl_contact_us (full_name, email_id, subjects, descp) values (?,?,?,?)";
+
+            await database.query(insertDataQuery, [full_name, email_id, subjects, descp]);
+            return callback({
+                code: response_code.SUCCESS,
+                message: "Thank You !"
+            });
+
+        }catch(error){
+            return callback({
+                code: response_code.OPERATION_FAILED,
+                message: "Some Error Occured",
+                data: error
+            });
+        }
     }
 
-    async edit_profile(request_data, callback){
+    async edit_profile(request_data, user_id, callback){
+        try{
+            if (!user_id) {
+                return callback({
+                    code: response_code.BAD_REQUEST,
+                    message: "User ID is required"
+                });
+            }
+    
+            const allowedFields = ["user_name", "user_full_name", "date_of_birth", "descriptions", "profile_pic"];
+            let updateFields = [];
+            let values = [];
+    
+            for (let key of allowedFields) {
+                if (request_data[key] !== undefined) {
+                    updateFields.push(`${key} = ?`);
+                    values.push(request_data[key]);
+                }
+            }
+    
+            if (updateFields.length === 0) {
+                return callback({
+                    code: response_code.NO_CHANGE,
+                    message: "No valid fields provided for update"
+                });
+            }
 
+            updateFields.push("updated_at = CURRENT_TIMESTAMP()");
+            values.push(user_id);
+    
+            const updateQuery = `
+                UPDATE tbl_user 
+                SET ${updateFields.join(", ")}
+                WHERE user_id = ? AND is_active = 1 AND is_deleted = 0 and is_login = 1
+            `;
+    
+            const [result] = await database.query(updateQuery, values);
+    
+            if (result.affectedRows > 0) {
+                return callback({
+                    code: response_code.SUCCESS,
+                    message: "Profile updated successfully"
+                });
+            } else {
+                return callback({
+                    code: response_code.NOT_FOUND,
+                    message: "User not found or no changes applied"
+                });
+            }
+
+
+        } catch(error){
+            return callback({
+                code: response_code.OPERATION_FAILED,
+                message: "Error updating profile"
+            });
+        }
     }
 
     async change_pswd(request_data, callback){
+        const user_id = request_data.user_id
+        
+        var selectQuery = "SELECT * FROM tbl_user WHERE user_id = ? and is_login = 1";
+        
+        try {
+            const [rows] = await database.query(selectQuery, [user_id]);
+            
+            if (!rows || rows.length === 0) {
+                return callback({
+                    code: response_code.NOT_FOUND,
+                    message: "User not found or Login Required"
+                });
+            }
+            const user = rows[0];
+    
+            const oldPasswordHash = md5(request_data.old_password);
+            const newPasswordHash = md5(request_data.new_password);
 
+            if (oldPasswordHash !== user.passwords) {
+                return callback({
+                    code: response_code.OPERATION_FAILED,
+                    message: "Old password does not match"
+                });
+            }
+    
+            if (newPasswordHash === user.passwords) {
+                return callback({
+                    code: response_code.OPERATION_FAILED,
+                    message: "Old password and new password can't be same"
+                });
+            }
+    
+            const data = {
+                passwords: newPasswordHash
+            };
+
+            const updateQuery = "UPDATE tbl_user SET ? where user_id = ?";
+            await database.query(updateQuery, [data, user_id]);
+
+            const selectUser = "SELECT user_name, user_full_name, descriptions, follower_cnt, following_cnt FROM tbl_user where user_id = ?"
+            const [result] = await database.query(selectUser, [user_id]);
+
+            return callback({
+                code: response_code.SUCCESS,
+                message: "Changed Successfully",
+                data: result
+            })
+    
+        } catch (error) {
+            console.error('Change Password Error:', error);
+            return callback({
+                code: response_code.OPERATION_FAILED,
+                message: error.message || "Error changing password"
+            });
+        }
     }
     
 }
