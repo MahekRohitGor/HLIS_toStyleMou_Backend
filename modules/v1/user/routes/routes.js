@@ -32,6 +32,8 @@ const user = (app) =>{
     app.post("/v1/user/delete-post", User.delete_posts);
     app.post("/v1/user/report-profile", User.report_profile);
     app.post("/v1/user/report-post", User.report_post);
+    app.post("/v1/user/list-category", User.list_categories);
+    app.post("/v1/user/filter-post-through-category", User.filter_post_category);
 
 }
 

@@ -189,6 +189,20 @@ class User{
             common.response(res, _response_data);
         });
     }
+
+    async list_categories(req,res){
+        var request_data = req.body;
+        userModel.list_categories(request_data, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
+    
+    async filter_post_category(req,res){
+        var request_data = req.body;
+        userModel.filter_post_category(request_data, (_response_data)=>{
+            common.response(res, _response_data);
+        });
+    }
 }
 
 module.exports = new User();

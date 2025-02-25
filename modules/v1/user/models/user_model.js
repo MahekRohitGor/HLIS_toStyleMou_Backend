@@ -41,7 +41,7 @@ class userModel {
                 if (existingUsers.length > 1) {
                     await database.query(
                         "UPDATE tbl_user SET is_deleted = 1 WHERE user_id = ?",
-                        [existingUsers[1]?.user_id]
+                        [existingUsers[1].user_id]
                     );
                 }
 
@@ -133,29 +133,29 @@ class userModel {
         console.log("OTP sent to user_id:", user_id, "OTP:", otp);
     }
 
-    async verify(request_data, callback){
-        const { user_id, otp } = request_data;
-        var verifyOtpQuery = "UPDATE tbl_user u INNER JOIN tbl_otp o ON u.user_id = o.user_id SET u.is_verify = 1 WHERE u.user_id = ? AND o.otp = ?";
-        try {
-            const [result] = await database.query(verifyOtpQuery, [user_id, otp]);
-            if (result.affectedRows > 0) {
-                return callback({
-                    code: response_code.SUCCESS,
-                    message: "User verified successfully"
-                });
-            } else {
-                return callback({
-                    code: response_code.NOT_FOUND,
-                    message: "Invalid OTP or user not found"
-                });
-            }
-        } catch (error) {
-            return callback({
-                code: response_code.OPERATION_FAILED,
-                message: error.sqlMessage || "Error verifying OTP"
-            });
-        }
-    }
+    // async verify(request_data, callback){
+    //     const { user_id, otp } = request_data;
+    //     var verifyOtpQuery = "UPDATE tbl_user u INNER JOIN tbl_otp o ON u.user_id = o.user_id SET u.is_verify = 1 WHERE u.user_id = ? AND o.otp = ?";
+    //     try {
+    //         const [result] = await database.query(verifyOtpQuery, [user_id, otp]);
+    //         if (result.affectedRows > 0) {
+    //             return callback({
+    //                 code: response_code.SUCCESS,
+    //                 message: "User verified successfully"
+    //             });
+    //         } else {
+    //             return callback({
+    //                 code: response_code.NOT_FOUND,
+    //                 message: "Invalid OTP or user not found"
+    //             });
+    //         }
+    //     } catch (error) {
+    //         return callback({
+    //             code: response_code.OPERATION_FAILED,
+    //             message: error.sqlMessage || "Error verifying OTP"
+    //         });
+    //     }
+    // }
 
     async login(request_data, callback){
         const user_data = {};
@@ -192,7 +192,6 @@ class userModel {
             console.log(user_id);
 
             const token = common.generateToken(40);
-            // console.log(token);
             const updateTokenQuery = "UPDATE tbl_user SET token = ?, is_login = 1 WHERE user_id = ?";
             await database.query(updateTokenQuery, [token, user_id]);
 
@@ -201,7 +200,7 @@ class userModel {
             await database.query(updateDeviceToken, [device_token, user_id]);
 
             common.getUserDetailLogin(user_id, (err, userInfo)=>{
-                console.log("getUserDetailLogin callback:", err, userInfo);
+                // console.log("getUserDetailLogin callback:", err, userInfo);
                 if(err){
                     console.log("Error here", err);
                     return callback({
@@ -1555,7 +1554,58 @@ class userModel {
         }
     }
     
+    async list_categories(request_data, callback){
+        try{
+            var selectCategoryQuery = `SELECT category_name from tbl_category`;
+            const [categories] = await database.query(selectCategoryQuery);
+            
+            return callback({
+                code: response_code.SUCCESS,
+                message: "Categories...",
+                data: categories
+            });
+
+        } catch(error){
+            return callback({
+                code: response_code.OPERATION_FAILED,
+                message: "Some Error",
+                data: error
+            })
+        }
+    }
     
+    async filter_post_category(request_data, callback){
+        try{
+            const {category_id} = request_data;
+            var selectPostFilterCategoryQuery = `SELECT 
+                p.post_id,
+                c.category_name,
+                GROUP_CONCAT(DISTINCT i.image_name ORDER BY i.image_id SEPARATOR ', ') AS image_names,
+                p.post_type
+            FROM tbl_post p
+            INNER JOIN tbl_category c ON p.category_id = c.category_id
+            LEFT JOIN tbl_post_image_relation pi ON pi.post_id = p.post_id
+            LEFT JOIN tbl_image i ON i.image_id = pi.image_id AND i.is_active = 1 AND i.is_deleted = 0
+            WHERE p.is_active = 1 AND p.is_deleted = 0
+              AND c.category_id = ?
+            GROUP BY p.post_id, c.category_name, p.post_type;`;
+
+            const [posts] = await database.query(selectPostFilterCategoryQuery, [category_id]);
+            
+            return callback({
+                code: response_code.SUCCESS,
+                message: "Posts...",
+                data: posts
+            });
+
+        } catch(error){
+            return callback({
+                code: response_code.OPERATION_FAILED,
+                message: "Some Error",
+                data: error
+            })
+        }
+    }
 }
 
 module.exports = new userModel();
