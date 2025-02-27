@@ -1,21 +1,95 @@
 var userModel = require("../models/user_model");
 var common = require("../../../../utilities/common");
 const response_code = require("../../../../utilities/response-error-code");
+// const Validator = require('Validator');
+const {default: localizify} = require('localizify');
+const en = require("../../../../language/en");
+const fr = require("../../../../language/fr");
+const guj = require("../../../../language/guj");
+const validator = require("../../../../middlewares/validator");
+
+const { t } = require('localizify');
+
+localizify
+    .add("en", en)
+    .add("fr", fr)
+    .add("guj", guj);
 
 class User{
-
     async signup(req,res){
-        var request_data = req.body;
-        userModel.signup(request_data, (_response_data)=>{
-            common.response(res, _response_data);
-        });
+        try{
+
+            localizify.setLocale(req.userLang);
+            var request_data = req.body;
+
+            var rules = {
+                email_id: "required|email",
+                user_name: "required",
+                code_id: "required",
+                mobile_number: "string|min:10|regex:/^[0-9]+$/",
+                passwords: "required|min:8"
+            }
+            var message = {
+                required: t('required'),
+                email: t('email'),
+                'mobile_number.min': t('mobile_number_min'),
+                'mobile_number.regex': t('mobile_number_numeric'),
+                'passwords.min': t('passwords_min')
+            }
+            var keywords = {
+                'email_id': t('rest_keywords_email_id'),
+                'passwords': t('rest_keywords_password')
+            }
+
+            const isValid = await validator.checkValidationRules(req, res, request_data, rules, message, keywords);
+            if (!isValid) return;
+
+            userModel.signup(request_data, (_response_data) => {
+                common.response(res, _response_data);
+            });
+
+        } catch(error){
+            console.error("Signup error:", error);
+            return common.response(res, {
+                code: response_code.OPERATION_FAILED,
+                message: t('rest_keywords_something_went_wrong')
+            });
+        }
+        
     }
 
     async login(req,res){
-        var request_data = req.body;
-        userModel.login(request_data, (_response_data)=>{
-            common.response(res, _response_data);
-        });
+        try{
+            localizify.setLocale(req.userLang);
+            var request_data = req.body;
+
+            var rules = {
+                email_id: "required|email",
+                passwords: "required|min:8"
+            }
+            var message = {
+                required: t('required'),
+                email: t('email'),
+                'passwords.min': t('passwords_min')
+            }
+            var keywords = {
+                'email_id': t('rest_keywords_email_id'),
+                'passwords': t('rest_keywords_password')
+            }
+
+            const isValid = await validator.checkValidationRules(req, res, request_data, rules, message, keywords);
+            if (!isValid) return;
+
+            userModel.login(request_data, (_response_data)=>{
+                common.response(res, _response_data);
+            });
+
+        } catch(error){
+            return common.response(res, {
+                code: response_code.OPERATION_FAILED,
+                message: t('rest_keywords_something_went_wrong')
+            });
+        }
     }
 
     async logout(req,res){
@@ -26,13 +100,71 @@ class User{
     }
 
     async forgot_password(req,res){
-        var request_data = req.body;
-        userModel.forgot_password(request_data, (_response_data)=>{
-            common.response(res, _response_data);
-        });
+        try{
+            localizify.setLocale(req.userLang);
+            var request_data = req.body;
+
+            var rules = {
+                email_id: "required|email"
+            }
+            var message = {
+                required: t('required'),
+                email: t('email')
+            }
+            var keywords = {
+                'email_id': t('rest_keywords_email_id')
+            }
+
+            const isValid = await validator.checkValidationRules(req, res, request_data, rules, message, keywords);
+            if (!isValid) return;
+
+            userModel.forgot_password(request_data, (_response_data)=>{
+                common.response(res, _response_data);
+            });
+
+        } catch(error){
+            return common.response(res, {
+                code: response_code.OPERATION_FAILED,
+                message: t('rest_keywords_something_went_wrong')
+            });
+        }
+        
     }
 
     async reset_password(req,res){
+        try{
+            localizify.setLocale(req.userLang);
+            var request_data = req.body;
+
+            var rules = {
+                email_id: "required|email",
+                reset_token: "required|min:10",
+                new_password: "required|min:8"
+            }
+            var message = {
+                required: t('required'),
+                email: t('email'),
+                'new_password.min': t('passwords_min')
+                // 'reset_token.min': t('token_min')
+
+            }
+            var keywords = {
+                'email_id': t('rest_keywords_email_id')
+            }
+
+            const isValid = await validator.checkValidationRules(req, res, request_data, rules, message, keywords);
+            if (!isValid) return;
+
+            userModel.forgot_password(request_data, (_response_data)=>{
+                common.response(res, _response_data);
+            });
+
+        } catch(error){
+            return common.response(res, {
+                code: response_code.OPERATION_FAILED,
+                message: t('rest_keywords_something_went_wrong')
+            });
+        }
         var request_data = req.body;
         userModel.reset_password(request_data, (_response_data)=>{
             common.response(res, _response_data);
@@ -40,10 +172,41 @@ class User{
     }
 
     async complete_profile(req,res){
-        var request_data = req.body;
-        userModel.complete_profile(request_data, request_data.user_id, (_response_data)=>{
-            common.response(res, _response_data);
-        });
+        try{
+            localizify.setLocale(req.userLang);
+            console.log("User language:", req.userLang);
+            var request_data = req.body;
+            console.log(request_data)
+
+            var rules = {
+                user_full_name: "required",
+                date_of_birth: "required"
+            }
+            var message = {
+                required: t('required')
+            }
+            var keywords = {
+                'user_full_name': t('rest_keywords_user_full_name'),
+                'date_of_birth': t('rest_keywords_user_date_of_birth')
+            }
+
+            const isValid = await validator.checkValidationRules(req, res, request_data, rules, message, keywords);
+            console.log(isValid);
+            if (!isValid) return;
+
+            userModel.complete_profile(request_data, request_data.user_id, (_response_data)=>{
+                console.log("User model response:", _response_data);
+                common.response(res, _response_data);
+            });
+
+        } catch(error){
+            console.error("Error in complete_profile:", error);
+            return common.response(res, {
+                code: response_code.OPERATION_FAILED,
+                message: t('rest_keywords_something_went_wrong')
+            });
+        }
+        
     }
 
     async trending_posts(req,res){
@@ -54,10 +217,41 @@ class User{
     }
 
     async add_post(req,res){
-        var request_data = req.body;
-        userModel.add_post(request_data, (_response_data)=>{
-            common.response(res, _response_data);
-        });
+        try{
+            localizify.setLocale(req.userLang);
+            var request_data = req.body;
+
+            var rules = {
+                descriptions: "required",
+                expire_timer: "required",
+                post_type: "required",
+                category_id: "required",
+                user_id: "required",
+                media_names: "required"
+            }
+            var message = {
+                required: t('required')
+            }
+            var keywords = {
+                'email_id': t('rest_keywords_email_id'),
+                'passwords': t('rest_keywords_password')
+            }
+
+            const isValid = await validator.checkValidationRules(req, res, request_data, rules, message, keywords);
+            if (!isValid) return;
+
+            userModel.add_post(request_data, (_response_data)=>{
+                common.response(res, _response_data);
+            });
+
+        } catch(error){
+            console.error(error);
+            return common.response(res, {
+                code: response_code.OPERATION_FAILED,
+                message: t('rest_keywords_something_went_wrong')
+            });
+        }
+        
     }
 
     async get_post_ranks(req,res){
