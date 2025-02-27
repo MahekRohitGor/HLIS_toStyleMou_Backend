@@ -233,8 +233,12 @@ class User{
                 required: t('required')
             }
             var keywords = {
-                'email_id': t('rest_keywords_email_id'),
-                'passwords': t('rest_keywords_password')
+                'descriptions': t('rest_keywords_descriptions'),
+                'expire_timer': t('rest_keywords_expire_timer'),
+                'post_type': t('rest_keywords_post_type'),
+                'category_id': t('rest_keywords_category_id'),
+                'user_id': t('rest_keywords_user_id'),
+                'media_names': t('rest_keywords_media_names')
             }
 
             const isValid = await validator.checkValidationRules(req, res, request_data, rules, message, keywords);
