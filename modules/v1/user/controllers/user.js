@@ -26,13 +26,14 @@ class User{
                 email_id: "required|email",
                 user_name: "required",
                 code_id: "required",
-                mobile_number: "string|min:10|regex:/^[0-9]+$/",
+                mobile_number: "string|min:10|max:10|regex:/^[0-9]+$/",
                 passwords: "required|min:8"
             }
             var message = {
                 required: t('required'),
                 email: t('email'),
                 'mobile_number.min': t('mobile_number_min'),
+                'mobile_number.max': t('mobile_number_max'),
                 'mobile_number.regex': t('mobile_number_numeric'),
                 'passwords.min': t('passwords_min')
             }
@@ -354,10 +355,39 @@ class User{
     }
 
     async change_pswd(req,res){
-        var request_data = req.body;
-        userModel.change_pswd(request_data, (_response_data)=>{
-            common.response(res, _response_data);
-        });
+        try{
+            localizify.setLocale(req.userLang);
+            var request_data = req.body;
+
+            var rules = {
+                user_id: "required",
+                old_password: "required|min:8",
+                new_password: "required|min:8"
+            }
+            var message = {
+                required: t('required'),
+                'old_password.min': t('passwords_min'),
+                'new_password.min': t('passwords_min')
+            }
+            var keywords = {
+                'new_password': t('rest_keywords_password'),
+                'old_password': t('rest_keywords_password')
+            }
+
+            const isValid = await validator.checkValidationRules(req, res, request_data, rules, message, keywords);
+            if (!isValid) return;
+
+            userModel.change_pswd(request_data, (_response_data)=>{
+                common.response(res, _response_data);
+            });
+
+        } catch(error){
+            return common.response(res, {
+                code: response_code.OPERATION_FAILED,
+                message: t('rest_keywords_something_went_wrong')
+            });
+        }
+        
     }
 
     async edit_profile(req,res){
@@ -368,10 +398,34 @@ class User{
     }
 
     async contact_us(req,res){
-        var request_data = req.body;
-        userModel.contact_us(request_data, (_response_data)=>{
-            common.response(res, _response_data);
-        });
+        try{
+            localizify.setLocale(req.userLang);
+            var request_data = req.body;
+
+            var rules = {
+                email_id: "required|email"
+            }
+            var message = {
+                required: t('required'),
+                email: t('email')
+            }
+            var keywords = {
+                'email_id': t('rest_keywords_email_id')
+            }
+
+            const isValid = await validator.checkValidationRules(req, res, request_data, rules, message, keywords);
+            if (!isValid) return;
+
+            userModel.contact_us(request_data, (_response_data)=>{
+                common.response(res, _response_data);
+            });
+
+        } catch(error){
+            return common.response(res, {
+                code: response_code.OPERATION_FAILED,
+                message: t('rest_keywords_something_went_wrong')
+            });
+        }
     }
 
     async report_post(req,res){
