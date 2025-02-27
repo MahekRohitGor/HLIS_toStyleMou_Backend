@@ -11,16 +11,16 @@ const pool = mysql.createPool({
   queueLimit: 0
 }).promise();
 
-async function checkDBConnection() {
-    try {
-      const [rows] = await pool.query("SELECT 1");
-      console.log("✅ Database connected successfully!");
-    } catch (error) {
-      console.error("❌ Database connection failed:", error);
-    }
-  }
+// async function checkDBConnection() {
+//     try {
+//       const [rows] = await pool.query("SELECT 1");
+//       console.log("✅ Database connected successfully!");
+//     } catch (error) {
+//       console.error("❌ Database connection failed:", error);
+//     }
+//   }
   
-  checkDBConnection();
+//   checkDBConnection();
 
 
 module.exports = pool;

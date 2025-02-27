@@ -16,7 +16,6 @@ var englishMessage = {
         "rest_keywords_email_id": "email id",
         "rest_keywords_user_full_name": "user full name",
         "rest_keywords_user_date_of_birth": "date of birth",
-        "rest_keywords_something_went_wrong": "Oopss... Something Went Wrong !",
         "mobile_number_min": "Mobile number must be at least 10 digits",
         "mobile_number_numeric": "Mobile number must contain only numbers",
         "passwords_min": "Password must be at least 8 characters long",
@@ -25,7 +24,23 @@ var englishMessage = {
         "rest_keywords_post_type": "Post Type",
         "rest_keywords_category_id": "Category ID",
         "rest_keywords_user_id": "User ID",
-        "rest_keywords_media_names": "Media Names"
+        "rest_keywords_media_names": "Media Names",
+        "signup_error": "Hey {username}! Your Email ID is already verified or Email already exists",
+        "verification_pending": "Verification Pending",
+        "verification_profile_pending": "Verification & Profile Completion Pending",
+        "login_error": "Some error in login",
+        "logout_success": "Logout successfully",
+        "user_not_found_or_logged_out": "Either user not found or already logged out",
+        "some_error_occurred": "Some error occurred",
+        "user_not_found": "User not found",
+        "password_reset_token_sent": "Password reset token sent successfully",
+        "forgot_password_error": "Error in forgot password process",
+        "invalid_expired_reset_token": "Invalid or expired reset token",
+        "password_reset_success": "Password reset successfully",
+        "password_reset_error": "Error resetting password",
+        "profile_already_completed": "Profile is already completed",
+        "profile_completed": "Profile completed",
+        "profile_update_error": "Error updating profile"
 }
 
 module.exports = englishMessage;

@@ -94,6 +94,7 @@ class User{
     }
 
     async logout(req,res){
+        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.logout(request_data, (_response_data)=>{
             common.response(res, _response_data);
@@ -156,7 +157,7 @@ class User{
             const isValid = await validator.checkValidationRules(req, res, request_data, rules, message, keywords);
             if (!isValid) return;
 
-            userModel.forgot_password(request_data, (_response_data)=>{
+            userModel.reset_password(request_data, (_response_data)=>{
                 common.response(res, _response_data);
             });
 
@@ -166,10 +167,7 @@ class User{
                 message: t('rest_keywords_something_went_wrong')
             });
         }
-        var request_data = req.body;
-        userModel.reset_password(request_data, (_response_data)=>{
-            common.response(res, _response_data);
-        });
+        
     }
 
     async complete_profile(req,res){
@@ -211,6 +209,7 @@ class User{
     }
 
     async trending_posts(req,res){
+        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.trending_posts(request_data, (_response_data)=>{
             common.response(res, _response_data);
@@ -260,6 +259,7 @@ class User{
     }
 
     async get_post_ranks(req,res){
+        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.get_post_ranks(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
@@ -267,6 +267,7 @@ class User{
     }
 
     async get_notifications(req,res){
+        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.get_notifications(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
@@ -274,24 +275,28 @@ class User{
     }
     
     async follow_user(req,res){
+        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.follow_user(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
         });
     }
     async rate_post(req,res){
+        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.rate_post(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
         });
     }
     async get_profile(req,res){
+        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.get_profile(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
         });
     }
     async get_other_profile(req,res){
+        localizify.setLocale(req.userLang)
         var request_data = req.body;
         var user_id = req.params.id;
         userModel.get_other_profile(request_data, user_id, (_response_data)=>{
@@ -299,6 +304,7 @@ class User{
         });
     }
     async filter(req,res){
+        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.filter(request_data, (_response_data)=>{
             common.response(res, _response_data);
@@ -306,6 +312,7 @@ class User{
     }
 
     async get_followers(req,res){
+        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.get_followers(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
@@ -313,6 +320,7 @@ class User{
     }
 
     async get_following(req,res){
+        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.get_following(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
@@ -320,6 +328,7 @@ class User{
     }
 
     async save_post(req,res){
+        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.save_post(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
@@ -327,6 +336,7 @@ class User{
     }
 
     async show_saved_post(req,res){
+        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.show_saved_post(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
@@ -334,6 +344,7 @@ class User{
     }
 
     async add_comment(req,res){
+        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.add_comment(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
@@ -341,6 +352,7 @@ class User{
     }
 
     async show_post_comments(req,res){
+        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.show_post_comments(request_data, (_response_data)=>{
             common.response(res, _response_data);
@@ -348,6 +360,7 @@ class User{
     }
 
     async delete_posts(req,res){
+        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.delete_posts(request_data, (_response_data)=>{
             common.response(res, _response_data);
@@ -391,6 +404,7 @@ class User{
     }
 
     async edit_profile(req,res){
+        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.edit_profile(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
@@ -429,6 +443,7 @@ class User{
     }
 
     async report_post(req,res){
+        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.report_post(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
@@ -436,6 +451,7 @@ class User{
     }
 
     async report_profile(req,res){
+        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.report_profile(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
@@ -443,6 +459,7 @@ class User{
     }
 
     async list_categories(req,res){
+        localizify.setLocale(req.userLang);
         var request_data = req.body;
         userModel.list_categories(request_data, (_response_data)=>{
             common.response(res, _response_data);
@@ -450,6 +467,7 @@ class User{
     }
     
     async filter_post_category(req,res){
+        localizify.setLocale(req.userLang);
         var request_data = req.body;
         userModel.filter_post_category(request_data, (_response_data)=>{
             common.response(res, _response_data);

@@ -14,7 +14,6 @@ var frenchMessage = {
         "data_found": "Données trouvées",
         "rest_keywords_password": "mot de passe",
         "rest_keywords_email_id": "identifiant e-mail",
-        "rest_keywords_something_went_wrong": "Oups! Quelque chose s'est mal passé.",
         "mobile_number_min": "Le numéro de téléphone doit contenir au moins 10 chiffres",
         "mobile_number_numeric": "Le numéro de téléphone ne doit contenir que des chiffres",
         "passwords_min": "Le mot de passe doit contenir au moins 8 caractères",
@@ -25,7 +24,23 @@ var frenchMessage = {
         "rest_keywords_post_type": "Type de publication",
         "rest_keywords_category_id": "ID de catégorie",
         "rest_keywords_user_id": "ID utilisateur",
-        "rest_keywords_media_names": "Noms des médias"
+        "rest_keywords_media_names": "Noms des médias",
+        "signup_error": "{username}! Votre adresse e-mail est déjà vérifiée / L'adresse e-mail existe déjà..",
+        "verification_pending": "Vérification en attente",
+        "verification_profile_pending": "Vérification et complétion du profil en attente",
+        "login_error": "Une erreur s'est produite lors de la connexion",
+        "logout_success": "Déconnexion réussie",
+        "user_not_found_or_logged_out": "Soit l'utilisateur n'a pas été trouvé, soit il est déjà déconnecté",
+        "some_error_occurred": "Une erreur s'est produite",
+        "user_not_found": "Utilisateur non trouvé",
+        "password_reset_token_sent": "Le jeton de réinitialisation du mot de passe a été envoyé avec succès",
+        "forgot_password_error": "Erreur dans le processus de mot de passe oublié",
+        "invalid_expired_reset_token": "Jeton de réinitialisation invalide ou expiré",
+        "password_reset_success": "Mot de passe réinitialisé avec succès",
+        "password_reset_error": "Erreur lors de la réinitialisation du mot de passe",
+        "profile_already_completed": "Le profil est déjà complété",
+        "profile_completed": "Profil complété",
+        "profile_update_error": "Erreur lors de la mise à jour du profil"
 }
 
 module.exports = frenchMessage;

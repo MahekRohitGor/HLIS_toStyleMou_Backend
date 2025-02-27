@@ -2,18 +2,23 @@ const common = require("../../../../utilities/common");
 const database = require("../../../../config/database");
 const response_code = require("../../../../utilities/response-error-code");
 const md5 = require("md5");
+const {default: localizify} = require('localizify');
+const en = require("../../../../language/en");
+const fr = require("../../../../language/fr");
+const guj = require("../../../../language/guj");
+const validator = require("../../../../middlewares/validator");
+
+const { t } = require('localizify');
+
+localizify
+    .add("en", en)
+    .add("fr", fr)
+    .add("guj", guj);
 
 class userModel {
     async signup(request_data, callback) {
         try {
-            console.log(request_data);
-            if (!request_data.email_id || !request_data.user_name || !request_data.code_id || !request_data.mobile_number || !request_data.passwords) {
-                return callback({
-                    code: response_code.OPERATION_FAILED,
-                    message: "Missing required fields"
-                });
-            }
-
+            localizify.setLocale(request_data.userLang);
             const data = {
                 user_name: request_data.user_name,
                 email_id: request_data.email_id,
@@ -21,7 +26,7 @@ class userModel {
                 mobile_number: request_data.mobile_number,
                 passwords: md5(request_data.passwords)
             };
-
+    
             const device_data = {
                 device_type: request_data.device_type,
                 device_token: request_data.device_token,
@@ -29,102 +34,98 @@ class userModel {
                 app_version: request_data.app_version,
                 time_zone: request_data.time_zone
             };
-
+    
             const checkUserExistsQuery = "SELECT * FROM tbl_user WHERE email_id = ?";
             const [existingUsers] = await database.query(checkUserExistsQuery, [data.email_id]);
-            console.log(existingUsers);
-            console.log(existingUsers.length)
-
+    
             if (existingUsers.length > 0) {
                 const user_data_ = existingUsers[0];
-
+    
                 if (existingUsers.length > 1) {
                     await database.query(
                         "UPDATE tbl_user SET is_deleted = 1 WHERE user_id = ?",
                         [existingUsers[1].user_id]
                     );
                 }
-
+    
                 const otp_obj = request_data.otp ? { otp: request_data.otp } : {};
-
+    
                 common.updateUserInfo(user_data_.user_id, otp_obj, (error, updateUser) => {
                     if (error) {
-                        console.log("Error here: ", error);
+                        console.log(error);
                         return callback({
                             code: response_code.OPERATION_FAILED,
-                            message: error
+                            message: t('signup_error', { username: request_data.user_name })
                         });
                     }
                     return callback({
                         code: response_code.SUCCESS,
-                        message: "User Signed up",
+                        message: t('rest_keywords_success'),
                         data: updateUser
                     });
                 });
-
+    
             } else {
                 const [insertResult] = await database.query("INSERT INTO tbl_user SET ?", data);
                 const userId = insertResult.insertId;
                 await this.enterOtp(userId);
-
+    
                 await database.query(
                     "INSERT INTO tbl_device_info (device_type, time_zone, device_token, os_version, app_version, user_id) VALUES (?, ?, ?, ?, ?, ?)",
                     [device_data.device_type, device_data.time_zone, device_data.device_token, device_data.os_version, device_data.app_version, userId]
                 );
-
+    
                 common.getUserDetail(userId, userId, async (err, userInfo) => {
                     try {
                         if (err) {
                             return callback({
                                 code: response_code.OPERATION_FAILED,
-                                message: err
+                                message: t('rest_keywords_something_went_wrong', { username: request_data.user_name })
                             });
                         }
-
+    
                         if (userInfo.is_profile_completed === 1) {
-                            
                             const userToken = common.generateToken(40);
                             const deviceToken = common.generateToken(40);
-
-                            
+    
                             await Promise.all([
                                 database.query("UPDATE tbl_user SET token = ? WHERE user_id = ?", [userToken, userId]),
                                 database.query("UPDATE tbl_device_info SET device_token = ? WHERE user_id = ?", [deviceToken, userId])
                             ]);
-
+    
                             userInfo.token = userToken;
                             userInfo.device_token = deviceToken;
-
+    
                             return callback({
                                 code: response_code.SUCCESS,
-                                message: "User Signed Up Successfully... Verification Pending",
+                                message: t('rest_keywords_success') + "... " + 
+                                         t('verification_pending'),
                                 data: userInfo
                             });
                         } else {
                             return callback({
                                 code: response_code.SUCCESS,
-                                message: "User Signed Up Successfully... Verification and Profile Completion is Pending",
+                                message: t('rest_keywords_success') + "... " + 
+                                         t('verification_profile_pending'),
                                 data: userInfo
                             });
                         }
                     } catch (tokenError) {
-                        console.error("Token update error:", tokenError);
                         return callback({
                             code: response_code.OPERATION_FAILED,
-                            message: "Error updating tokens"
+                            message: t('rest_keywords_something_went_wrong', { username: request_data.user_name })
                         });
                     }
                 });
             }
-
+    
         } catch (error) {
-            console.error("Signup error:", error);
             return callback({
                 code: response_code.OPERATION_FAILED,
-                message: "An error occurred during signup"
+                message: t('rest_keywords_something_went_wrong', { username: request_data.user_name })
             });
         }
-    }
+    }    
 
     async enterOtp(user_id){
         const otp = common.generateOtp(4);
@@ -158,6 +159,8 @@ class userModel {
     // }
 
     async login(request_data, callback){
+        localizify.setLocale(request_data.userLang);
+        console.log(request_data.userLang);
         const user_data = {};
         if(request_data.email_id != undefined && request_data.email_id != ""){
             user_data.email_id = request_data.email_id;
@@ -172,24 +175,17 @@ class userModel {
         var selectUserWithCred = "SELECT * FROM tbl_user WHERE (email_id = ? AND passwords = ?) or (mobile_number = ? and passwords = ?)";
         var params = [user_data.email_id, user_data.passwords, user_data.mobile_number, user_data.passwords];
 
-        console.log(user_data);
-
         try{
             const [status] = await database.query(selectUserWithCred, params);
 
-            console.log("Status: ", status);
-            console.log(status.length);
-
             if (status.length === 0) {
-                console.log(status.length);
                 return callback({
                     code: response_code.NOT_FOUND,
-                    message: "No User Found"
+                    message: t('no_data_found')
                 });
             }
 
             const user_id = status[0].user_id;
-            console.log(user_id);
 
             const token = common.generateToken(40);
             const updateTokenQuery = "UPDATE tbl_user SET token = ?, is_login = 1 WHERE user_id = ?";
@@ -205,7 +201,7 @@ class userModel {
                     console.log("Error here", err);
                     return callback({
                         code: response_code.OPERATION_FAILED,
-                        message: "Some Error"
+                        message: t('no_data_found')
                     });
                 }
                 else{
@@ -213,7 +209,7 @@ class userModel {
                     userInfo.device_token = device_token;
                     return callback({
                         code: response_code.SUCCESS,
-                        message: "User Signed in Successfully",
+                        message: t('login_success'),
                         data: userInfo
                     });
 
@@ -223,12 +219,14 @@ class userModel {
         } catch(error){
             return callback({
                 code: response_code.OPERATION_FAILED,
-                message: error.sqlMessage || "SOME ERROR IN LOGIN"
+                message: error.sqlMessage || t('login_error')
             });
         }
     }
 
     async logout(request_data, callback){
+        localizify.setLocale(request_data.userLang);
+        console.log("Language in logout function:", request_data.userLang);
         try{
             const user_id = request_data.user_id;
             var select_user_query = "SELECT * FROM tbl_user WHERE user_id = ? and is_login = 1";
@@ -247,21 +245,21 @@ class userModel {
     
             return callback({
                 code: response_code.SUCCESS,
-                message: "Logout successful",
+                message: t('logout_success'),
                 data: updatedUser[0]
             });
 
             } else{
                 return callback({
                     code: response_code.NOT_FOUND,
-                    message: "Either user not found or already logged out..."
+                    message: t('user_not_found_or_logged_out')
                 });
             }
 
         } catch(error){
             return callback({
                 code: response_code.OPERATION_FAILED,
-                message: "Some error Occured...",
+                message: t('some_error_occurred'),
                 data: error
             })
         }
@@ -269,14 +267,8 @@ class userModel {
     }
 
     async forgot_password(requested_data, callback) {
+        localizify.setLocale(requested_data.userLang);
         const { email_id } = requested_data;
-        
-        if (!email_id) {
-            return callback({
-                code: response_code.OPERATION_FAILED,
-                message: "Email ID is required"
-            });
-        }
         
         try {
             const userQuery = "SELECT * FROM tbl_user WHERE email_id = ?";
@@ -285,7 +277,7 @@ class userModel {
             if (!user.length) {
                 return callback({
                     code: response_code.NOT_FOUND,
-                    message: "User not found"
+                    message: t('user_not_found')
                 });
             }
             
@@ -297,26 +289,20 @@ class userModel {
             
             return callback({
                 code: response_code.SUCCESS,
-                message: "Password reset token sent successfully"
+                message: t('password_reset_token_sent')
             });
             
         } catch (error) {
             return callback({
                 code: response_code.OPERATION_FAILED,
-                message: error.sqlMessage || "Error in forgot password process"
+                message: error.sqlMessage || t('forgot_password_error')
             });
         }
     }
 
     async reset_password(requested_data, callback) {
+        localizify.setLocale(requested_data.userLang);
         const { reset_token, new_password } = requested_data;
-    
-        if (!reset_token || !new_password) {
-            return callback({
-                code: response_code.INVALID_REQUEST,
-                message: "Reset token and new password are required"
-            });
-        }
     
         try {
             const selectTokenQuery = `
@@ -329,7 +315,7 @@ class userModel {
             if (!result.length) {
                 return callback({
                     code: response_code.NOT_FOUND,
-                    message: "Invalid or expired reset token"
+                    message: t('invalid_expired_reset_token')
                 });
             }
     
@@ -344,18 +330,19 @@ class userModel {
     
             return callback({
                 code: response_code.SUCCESS,
-                message: "Password reset successfully"
+                message: t('password_reset_success')
             });
     
         } catch (error) {
             return callback({
                 code: response_code.OPERATION_FAILED,
-                message: error.sqlMessage || "Error resetting password"
+                message: error.sqlMessage || t('password_reset_error')
             });
         }
     }
 
     async complete_profile(requested_data, user_id, callback) {
+        localizify.setLocale(requested_data.userLang);
         try {
             const userFetchQuery = "SELECT is_profile_completed FROM tbl_user WHERE user_id = ?";
             const [result] = await database.query(userFetchQuery, [user_id]);
@@ -363,25 +350,18 @@ class userModel {
             if (result[0].is_profile_completed === 1) {
                 return callback({
                     code: response_code.SUCCESS,
-                    message: "Profile is already complete",
+                    message: t('profile_already_completed'),
                 });
             } else{
 
                 const { user_full_name, date_of_birth } = requested_data;
-
-            if (!user_id || !user_full_name || !date_of_birth) {
-                return callback({
-                    code: response_code.OPERATION_FAILED,
-                    message: "All fields are required",
-                });
-            }
     
-            if (result.length === 0) {
-                return callback({
-                    code: response_code.NOT_FOUND,
-                    message: "User not found",
-                });
-            }
+                if (result.length === 0) {
+                    return callback({
+                        code: response_code.NOT_FOUND,
+                        message: t('user_not_found'),
+                    });
+                }
 
             const updateProfileQuery = `
                 UPDATE tbl_user 
@@ -395,7 +375,7 @@ class userModel {
     
             return callback({
                 code: response_code.SUCCESS,
-                message: "Profile completed successfully",
+                message: t('profile_completed'),
                 data: updatedUser[0],
             });
 
@@ -404,7 +384,7 @@ class userModel {
         } catch (error) {
             return callback({
                 code: response_code.OPERATION_FAILED,
-                message: error.sqlMessage || "Error updating profile",
+                message: error.sqlMessage || t('profile_update_error'),
             });
         }
     }
@@ -412,13 +392,6 @@ class userModel {
     async add_post(request_data, callback) {
         try {
             const { descriptions, expire_timer, post_type, category_id, user_id, media_names, tags } = request_data;
-    
-            if (!descriptions || !post_type || !category_id || !user_id || !media_names || media_names.length === 0) {
-                return callback({
-                    code: response_code.OPERATION_FAILED,
-                    message: "Missing required fields or media files",
-                });
-            }
     
             const mediaInsertQuery = "INSERT INTO tbl_image (image_name) VALUES ?";
             const mediaValues = media_names.map(name => [name]);
