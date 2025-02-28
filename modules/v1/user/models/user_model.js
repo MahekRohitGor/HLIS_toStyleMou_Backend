@@ -455,14 +455,14 @@ class userModel {
     
             return callback({
                 code: response_code.SUCCESS,
-                message: "Post added successfully",
+                message: t('post_added_success'),
                 data: createdPost[0],
             });
     
         } catch (error) {
             return callback({
                 code: response_code.OPERATION_FAILED,
-                message: error.sqlMessage || "Error adding post",
+                message: error.sqlMessage || t('post_add_error'),
             });
         }
     }
@@ -470,13 +470,6 @@ class userModel {
     async get_post_ranks(request_data, user_id, callback) {
         try {
             const { post_id } = request_data;
-    
-            if (!post_id) {
-                return callback({
-                    code: response_code.BAD_REQUEST,
-                    message: "post_id is required"
-                });
-            }
 
             const postOwnerQuery = `SELECT p.user_id, p.expire_timer FROM tbl_post p inner join tbl_user u on u.user_id = p.user_id WHERE p.post_id = ? and u.is_login = 1`;
             const [postDetails] = await database.query(postOwnerQuery, [post_id]);
@@ -484,7 +477,7 @@ class userModel {
             if (postDetails.length === 0) {
                 return callback({
                     code: response_code.NOT_FOUND,
-                    message: "Post not found or Login Required"
+                    message: t('post_not_found_or_login_required')
                 });
             }
     
@@ -505,7 +498,7 @@ class userModel {
             
             return callback({
                 code: response_code.SUCCESS,
-                message: "Rankings fetched successfully",
+                message: t('rankings_fetched_success'),
                 data: rankResults
             });
 
@@ -529,7 +522,7 @@ class userModel {
 
             return callback({
                 code: response_code.SUCCESS,
-                message: "Post details fetched successfully",
+                message: t('post_details_fetched_success'),
                 data: normalPost
             });
             }
@@ -537,7 +530,7 @@ class userModel {
         } catch (error) {
             return callback({
                 code: response_code.OPERATION_FAILED,
-                message: error.sqlMessage || "Error fetching rankings"
+                message: error.sqlMessage || t('rankings_fetch_error')
             });
         }
     }
@@ -590,14 +583,14 @@ class userModel {
     
             return callback({
                 code: response_code.SUCCESS,
-                message: "Trending posts fetched successfully",
+                message: t('trending_posts_fetched_success'),
                 data: trendingPosts
             });
     
         } catch (error) {
             return callback({
                 code: response_code.OPERATION_FAILED,
-                message: error.sqlMessage || "Error fetching trending posts"
+                message: error.sqlMessage || t('trending_posts_fetch_error')
             });
         }
     }
@@ -610,7 +603,7 @@ class userModel {
             if (userResult.length === 0) {
                 return callback({
                     code: response_code.OPERATION_FAILED,
-                    message: "Login Required or User not found",
+                    message: t('login_required_or_user_not_found'),
                 });
             }
     
@@ -624,7 +617,7 @@ class userModel {
     
             return callback({
                 code: response_code.SUCCESS,
-                message: notifications.length > 0 ? "Here are your notifications..." : "No notifications found",
+                message: notifications.length > 0 ? t('notifications_list') : t('no_notifications'),
                 data: notifications,
             });
     
@@ -632,7 +625,7 @@ class userModel {
             console.error("Error fetching notifications:", error);
             return callback({
                 code: response_code.OPERATION_FAILED,
-                message: "An error occurred while fetching notifications",
+                message: t('notifications_fetch_error'),
                 error: error.message
             });
         }
@@ -641,13 +634,7 @@ class userModel {
     async follow_user(request_data, user_id, callback) {
         try {
             const { follow_id } = request_data;
-    
-            if (!follow_id) {
-                return callback({
-                    code: response_code.BAD_REQUEST,
-                    message: "Follow ID is required",
-                });
-            }
+
     
             const checkFollowQuery = "SELECT * FROM tbl_follow WHERE user_id = ? AND follow_id = ?";
             const [existingFollow] = await database.query(checkFollowQuery, [user_id, follow_id]);
@@ -655,7 +642,7 @@ class userModel {
             if (existingFollow.length > 0) {
                 return callback({
                     code: response_code.ALREADY_EXISTS,
-                    message: "You are already following this user",
+                    message: t('already_following_user'),
                 });
             }
     
@@ -664,13 +651,13 @@ class userModel {
     
             return callback({
                 code: response_code.SUCCESS,
-                message: "User followed successfully",
+                message: t('user_followed_success'),
             });
     
         } catch (error) {
             return callback({
                 code: response_code.OPERATION_FAILED,
-                message: "Error occurred while following user",
+                message: t('user_follow_error'),
                 data: error.message || error,
             });
         }
@@ -693,7 +680,7 @@ class userModel {
             if (post.length === 0) {
                 return callback({
                     code: response_code.NOT_FOUND,
-                    message: "Post not found",
+                    message: t('post_not_found'),
                 });
             }
     
@@ -703,7 +690,7 @@ class userModel {
                 if (!sub_post_id) {
                     return callback({
                         code: response_code.BAD_REQUEST,
-                        message: "sub_post_id is required for toStyleCompare",
+                        message: t('sub_post_id_required'),
                     });
                 }
     
@@ -713,7 +700,7 @@ class userModel {
                 if (subpost.length === 0) {
                     return callback({
                         code: response_code.NOT_FOUND,
-                        message: "Subpost not found",
+                        message: t('sub_post_not_found'),
                     });
                 }
                 const checkRatingQuery = "SELECT * FROM tbl_sub_post_rating WHERE sub_post_id = ? AND user_id = ?";
@@ -743,13 +730,13 @@ class userModel {
     
             return callback({
                 code: response_code.SUCCESS,
-                message: `Rating added successfully for ${post_type}`,
+                message: t('rating_added_success', { post_type: post_type }),
             });
     
         } catch (error) {
             return callback({
                 code: response_code.OPERATION_FAILED,
-                message: error.sqlMessage || "Error adding rating",
+                message: error.sqlMessage || t('rating_add_error'),
             });
         }
     }
@@ -777,12 +764,12 @@ class userModel {
             if(results.length === 0){
                 return callback({
                     code: response_code.OPERATION_FAILED,
-                    message: "No Users Found"
+                    message: t('user_not_found')
                 });
             }
             return callback({
                 code: response_code.SUCCESS,
-                message: "User Profile",
+                message: t('user_profile'),
                 data: results
             });
         } catch(error){
@@ -816,12 +803,12 @@ class userModel {
             if(results.length === 0){
                 return callback({
                     code: response_code.OPERATION_FAILED,
-                    message: "No Users Found"
+                    message: t('user_not_found')
                 });
             }
             return callback({
                 code: response_code.SUCCESS,
-                message: "User Profile",
+                message: t('user_profile'),
                 data: results
             });
 
@@ -875,12 +862,12 @@ class userModel {
             if(results.length === 0){
                 return callback({
                     code: response_code.NOT_FOUND,
-                    message: "NOT FOUND"
+                    message: t('no_data_found')
                 });
             }
             return callback({
                 code: response_code.SUCCESS,
-                message: "Here are posts...",
+                message: t('posts_list'),
                 data: results
             });
 
@@ -933,12 +920,12 @@ class userModel {
             if(results.length === 0){
                 return callback({
                     code: response_code.NOT_FOUND,
-                    message: "NOT FOUND"
+                    message: t('no_data_found')
                 });
             }
             return callback({
                 code: response_code.SUCCESS,
-                message: "Here are posts...",
+                message: t('posts_list'),
                 data: results
             });
 
@@ -986,19 +973,19 @@ class userModel {
             if(results.length === 0){
                 return callback({
                     code: response_code.NOT_FOUND,
-                    message: "NOT FOUND"
+                    message: t('no_data_found')
                 });
             }
             return callback({
                 code: response_code.SUCCESS,
-                message: "Here are posts...",
+                message: t('posts_list'),
                 data: results
             });
 
         } else{
             return callback({
                 code: response_code.NOT_FOUND,
-                message: "Some Error"
+                message: t('some_error_occurred')
             });
         }
     }
@@ -1019,14 +1006,14 @@ class userModel {
             if(results.length === 0){
                 return callback({
                     code: response_code.NOT_FOUND,
-                    message: "NO FOLLOWERS FOUND",
+                    message: t('no_data_found'),
                     data: results
                 });
 
             } else{
                 return callback({
                     code: response_code.SUCCESS,
-                    message: "Here are your followers...",
+                    message: t('followers_list'),
                     data: results
                 });
             }
@@ -1056,14 +1043,14 @@ class userModel {
             if(results.length === 0){
                 return callback({
                     code: response_code.NOT_FOUND,
-                    message: "NO FOLLOWING FOUND, TRY FOLLOW SOMEONE",
+                    message: t('no_following_found'),
                     data: results
                 });
 
             } else{
                 return callback({
                     code: response_code.SUCCESS,
-                    message: "Here are your following...",
+                    message: t('following_list'),
                     data: results
                 });
             }
@@ -1092,7 +1079,7 @@ class userModel {
 
                 return callback({
                     code: response_code.SUCCESS,
-                    message: "Post unsaved successfully.",
+                    message: t('post_unsaved_success'),
                 });
             } else {
                 const savePostQuery = "INSERT INTO tbl_save (is_save, post_id, user_id) VALUES (1,?,?)";
@@ -1100,7 +1087,7 @@ class userModel {
 
                 return callback({
                     code: response_code.SUCCESS,
-                    message: "Post saved successfully."
+                    message: t('post_saved_success')
                 });
             }
             
@@ -1108,7 +1095,7 @@ class userModel {
         } catch(error){
             return callback({
                 code: response_code.OPERATION_FAILED,
-                message: "Some Error Occured",
+                message: t('some_error_occurred'),
                 data: error
             });
         }
@@ -1123,7 +1110,7 @@ class userModel {
             if(user.length === 0){
                 return callback({
                     code: response_code.OPERATION_FAILED,
-                    message: "Login Required"
+                    message: t('login_required')
                 });
             } else{
                 var selectSavedPostQuery = `
@@ -1174,12 +1161,12 @@ class userModel {
                 if(result.length === 0){
                     return callback({
                         code: response_code.OPERATION_FAILED,
-                        message: "NO SAVED POST"
+                        message: t('no_saved_posts')
                     });
                 } else{
                     return callback({
                         code: response_code.SUCCESS,
-                        message: "SAVED POSTS",
+                        message: t('saved_posts_list'),
                         data: result
                     });
                 }
@@ -1188,7 +1175,7 @@ class userModel {
         } catch(error){
             return callback({
                 code: response_code.OPERATION_FAILED,
-                message: "Error",
+                message: t('some_error_occurred'),
                 data: error
             });
 
@@ -1204,7 +1191,7 @@ class userModel {
             if(user.length === 0){
                 return callback({
                     code: response_code.OPERATION_FAILED,
-                    message: "Login Required"
+                    message: t('login_required')
                 });
             } else{
                 const {post_id, comments} = request_data;
@@ -1216,7 +1203,7 @@ class userModel {
 
                 return callback({
                     code: response_code.SUCCESS,
-                    message: "Comment Added Successfully...",
+                    message: t('comment_added_success'),
                     data: results
                 });
 
@@ -1225,7 +1212,7 @@ class userModel {
         } catch(error){
             return callback({
                 code: response_code.OPERATION_FAILED,
-                message: "Error",
+                message: t('some_error_occurred'),
                 data: error
             });
         }
@@ -1240,12 +1227,12 @@ class userModel {
             if(result.length === 0){
                 return callback({
                     code: response_code.NOT_FOUND,
-                    message: "No comments yet"
+                    message: t('no_comments')
                 });
             } else{
                 return callback({
                     code: response_code.SUCCESS,
-                    message: "Comments are here",
+                    message: t('comments_list'),
                     data: result
                 })
             }
@@ -1253,7 +1240,7 @@ class userModel {
         } catch(error){
             return callback({
                 code: response_code.OPERATION_FAILED,
-                message: "Some Error Occured",
+                message: t('some_error_occurred'),
                 data: error
             })
         }
@@ -1269,14 +1256,14 @@ class userModel {
             if (post.length === 0) {
                 return callback({
                     code: response_code.NOT_FOUND,
-                    message: "Post not found or you are not authorized to delete it."
+                    message: t('post_delete_unauthorized')
                 });
             }
 
             if (post[0].is_deleted === 1) {
                 return callback({
                     code: response_code.SUCCESS,
-                    message: "Post is already deleted."
+                    message: t('post_already_deleted')
                 });
             }
 
@@ -1295,13 +1282,13 @@ class userModel {
 
             return callback({
                 code: response_code.SUCCESS,
-                message: "Post and related images deleted successfully."
+                message: t('post_deleted_success')
             });
 
         } catch(error){
             return callback({
                 code: response_code.OPERATION_FAILED,
-                message: "Error Occured",
+                message: t('some_error_occurred'),
                 data: error
             })
         }
@@ -1315,13 +1302,13 @@ class userModel {
             await database.query(insertDataQuery, [full_name, email_id, subjects, descp]);
             return callback({
                 code: response_code.SUCCESS,
-                message: "Thank You !"
+                message: t('thank_you')
             });
 
         }catch(error){
             return callback({
                 code: response_code.OPERATION_FAILED,
-                message: "Some Error Occured",
+                message: t('some_error_occurred'),
                 data: error
             });
         }
@@ -1329,12 +1316,6 @@ class userModel {
 
     async edit_profile(request_data, user_id, callback){
         try{
-            if (!user_id) {
-                return callback({
-                    code: response_code.BAD_REQUEST,
-                    message: "User ID is required"
-                });
-            }
     
             const allowedFields = ["user_name", "user_full_name", "date_of_birth", "descriptions", "profile_pic"];
             let updateFields = [];
@@ -1350,7 +1331,7 @@ class userModel {
             if (updateFields.length === 0) {
                 return callback({
                     code: response_code.NO_CHANGE,
-                    message: "No valid fields provided for update"
+                    message: t('no_valid_fields_update')
                 });
             }
 
@@ -1368,12 +1349,12 @@ class userModel {
             if (result.affectedRows > 0) {
                 return callback({
                     code: response_code.SUCCESS,
-                    message: "Profile updated successfully"
+                    message: t('profile_updated_success')
                 });
             } else {
                 return callback({
                     code: response_code.NOT_FOUND,
-                    message: "User not found or no changes applied"
+                    message: t('profile_update_no_changes')
                 });
             }
 
@@ -1381,7 +1362,7 @@ class userModel {
         } catch(error){
             return callback({
                 code: response_code.OPERATION_FAILED,
-                message: "Error updating profile"
+                message: t('profile_update_error')
             });
         }
     }
@@ -1397,7 +1378,7 @@ class userModel {
             if (!rows || rows.length === 0) {
                 return callback({
                     code: response_code.NOT_FOUND,
-                    message: "User not found or Login Required"
+                    message: t('no_data_found')
                 });
             }
             const user = rows[0];
@@ -1408,14 +1389,14 @@ class userModel {
             if (oldPasswordHash !== user.passwords) {
                 return callback({
                     code: response_code.OPERATION_FAILED,
-                    message: "Old password does not match"
+                    message: t('old_password_mismatch')
                 });
             }
     
             if (newPasswordHash === user.passwords) {
                 return callback({
                     code: response_code.OPERATION_FAILED,
-                    message: "Old password and new password can't be same"
+                    message: t('old_new_password_same')
                 });
             }
     
@@ -1431,7 +1412,7 @@ class userModel {
 
             return callback({
                 code: response_code.SUCCESS,
-                message: "Changed Successfully",
+                message: t('password_changed_success'),
                 data: result
             })
     
@@ -1439,7 +1420,7 @@ class userModel {
             console.error('Change Password Error:', error);
             return callback({
                 code: response_code.OPERATION_FAILED,
-                message: error.message || "Error changing password"
+                message: error.message || t('password_change_error')
             });
         }
     }
@@ -1448,20 +1429,13 @@ class userModel {
         try {
             const { post_id } = request_data;
     
-            if (!post_id) {
-                return callback({
-                    code: response_code.BAD_REQUEST,
-                    message: "Post ID is required"
-                });
-            }
-    
             const checkQuery = `SELECT report_p_id FROM report_post WHERE user_id = ? AND post_id = ? AND is_active = 1 AND is_deleted = 0`;
             const [existingReport] = await database.query(checkQuery, [user_id, post_id]);
     
             if (existingReport.length > 0) {
                 return callback({
                     code: response_code.ALREADY_EXISTS,
-                    message: "You have already reported this post"
+                    message: t('post_already_reported')
                 });
             }
     
@@ -1470,13 +1444,13 @@ class userModel {
     
             return callback({
                 code: response_code.SUCCESS,
-                message: "Post reported successfully"
+                message: t('post_reported_success')
             });
     
         } catch (error) {
             return callback({
                 code: response_code.OPERATION_FAILED,
-                message: "Error reporting post",
+                message: t('post_report_error'),
                 data: error
             });
         }
@@ -1486,17 +1460,17 @@ class userModel {
         try {
             const { profile_reported_id } = request_data;
     
-            if (!profile_reported_id) {
-                return callback({
-                    code: response_code.BAD_REQUEST,
-                    message: "Profile ID to report is required"
-                });
-            }
+            // if (!profile_reported_id) {
+            //     return callback({
+            //         code: response_code.BAD_REQUEST,
+            //         message: "Profile ID to report is required"
+            //     });
+            // }
     
             if (user_id === profile_reported_id) {
                 return callback({
                     code: response_code.BAD_REQUEST,
-                    message: "You cannot report your own profile"
+                    message: t('cannot_report_own_profile')
                 });
             }
     
@@ -1506,7 +1480,7 @@ class userModel {
             if (existingReport.length > 0) {
                 return callback({
                     code: response_code.ALREADY_EXISTS,
-                    message: "You have already reported this profile"
+                    message: t('profile_already_reported')
                 });
             }
     
@@ -1515,13 +1489,13 @@ class userModel {
     
             return callback({
                 code: response_code.SUCCESS,
-                message: "Profile reported successfully"
+                message: t('profile_reported_success')
             });
     
         } catch (error) {
             return callback({
                 code: response_code.OPERATION_FAILED,
-                message: "Error reporting profile",
+                message: t('profile_report_error'),
                 data: error
             });
         }
@@ -1534,14 +1508,14 @@ class userModel {
             
             return callback({
                 code: response_code.SUCCESS,
-                message: "Categories...",
+                message: t('categories'),
                 data: categories
             });
 
         } catch(error){
             return callback({
                 code: response_code.OPERATION_FAILED,
-                message: "Some Error",
+                message: t('some_error_occurred'),
                 data: error
             })
         }
@@ -1567,14 +1541,14 @@ class userModel {
             
             return callback({
                 code: response_code.SUCCESS,
-                message: "Posts...",
+                message: t('posts'),
                 data: posts
             });
 
         } catch(error){
             return callback({
                 code: response_code.OPERATION_FAILED,
-                message: "Some Error",
+                message: t('some_error_occurred'),
                 data: error
             })
         }
