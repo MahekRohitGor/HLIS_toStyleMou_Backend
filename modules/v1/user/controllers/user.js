@@ -1,34 +1,17 @@
 var userModel = require("../models/user_model");
 var common = require("../../../../utilities/common");
 const response_code = require("../../../../utilities/response-error-code");
-// const Validator = require('Validator');
 const {default: localizify} = require('localizify');
-const en = require("../../../../language/en");
-const fr = require("../../../../language/fr");
-const guj = require("../../../../language/guj");
 const validator = require("../../../../middlewares/validator");
-
 const { t } = require('localizify');
+const vrules = require("../../../validation-rules");
 
-localizify
-    .add("en", en)
-    .add("fr", fr)
-    .add("guj", guj);
 
 class User{
     async signup(req,res){
         try{
-
-            localizify.setLocale(req.userLang);
             var request_data = req.body;
-
-            var rules = {
-                email_id: "required|email",
-                user_name: "required",
-                code_id: "required",
-                mobile_number: "string|min:10|max:10|regex:/^[0-9]+$/",
-                passwords: "required|min:8"
-            }
+            var rules = vrules.signup;
             var message = {
                 required: t('required'),
                 email: t('email'),
@@ -56,18 +39,14 @@ class User{
                 message: t('rest_keywords_something_went_wrong')
             });
         }
-        
     }
-
+   
     async login(req,res){
         try{
-            localizify.setLocale(req.userLang);
             var request_data = req.body;
 
-            var rules = {
-                email_id: "required|email",
-                passwords: "required|min:8"
-            }
+            var rules = vrules.login;
+
             var message = {
                 required: t('required'),
                 email: t('email'),
@@ -94,7 +73,6 @@ class User{
     }
 
     async logout(req,res){
-        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.logout(request_data, (_response_data)=>{
             common.response(res, _response_data);
@@ -103,12 +81,10 @@ class User{
 
     async forgot_password(req,res){
         try{
-            localizify.setLocale(req.userLang);
             var request_data = req.body;
 
-            var rules = {
-                email_id: "required|email"
-            }
+            var rules = vrules.forgot_password;
+
             var message = {
                 required: t('required'),
                 email: t('email')
@@ -135,14 +111,8 @@ class User{
 
     async reset_password(req,res){
         try{
-            localizify.setLocale(req.userLang);
             var request_data = req.body;
-
-            var rules = {
-                email_id: "required|email",
-                reset_token: "required|min:10",
-                new_password: "required|min:8"
-            }
+            var rules = vrules.reset_password;
             var message = {
                 required: t('required'),
                 email: t('email'),
@@ -172,15 +142,8 @@ class User{
 
     async complete_profile(req,res){
         try{
-            localizify.setLocale(req.userLang);
-            console.log("User language:", req.userLang);
             var request_data = req.body;
-            console.log(request_data)
-
-            var rules = {
-                user_full_name: "required",
-                date_of_birth: "required"
-            }
+            var rules = vrules.complete_profile;
             var message = {
                 required: t('required')
             }
@@ -209,7 +172,6 @@ class User{
     }
 
     async trending_posts(req,res){
-        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.trending_posts(request_data, (_response_data)=>{
             common.response(res, _response_data);
@@ -218,17 +180,10 @@ class User{
 
     async add_post(req,res){
         try{
-            localizify.setLocale(req.userLang);
             var request_data = req.body;
 
-            var rules = {
-                descriptions: "required",
-                expire_timer: "required",
-                post_type: "required",
-                category_id: "required",
-                user_id: "required",
-                media_names: "required"
-            }
+            var rules = vrules.add_post;
+
             var message = {
                 required: t('required')
             }
@@ -259,7 +214,6 @@ class User{
     }
 
     async get_post_ranks(req,res){
-        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.get_post_ranks(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
@@ -267,7 +221,6 @@ class User{
     }
 
     async get_notifications(req,res){
-        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.get_notifications(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
@@ -275,28 +228,24 @@ class User{
     }
     
     async follow_user(req,res){
-        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.follow_user(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
         });
     }
     async rate_post(req,res){
-        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.rate_post(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
         });
     }
     async get_profile(req,res){
-        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.get_profile(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
         });
     }
     async get_other_profile(req,res){
-        localizify.setLocale(req.userLang)
         var request_data = req.body;
         var user_id = req.params.id;
         userModel.get_other_profile(request_data, user_id, (_response_data)=>{
@@ -304,7 +253,6 @@ class User{
         });
     }
     async filter(req,res){
-        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.filter(request_data, (_response_data)=>{
             common.response(res, _response_data);
@@ -312,7 +260,6 @@ class User{
     }
 
     async get_followers(req,res){
-        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.get_followers(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
@@ -320,7 +267,6 @@ class User{
     }
 
     async get_following(req,res){
-        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.get_following(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
@@ -328,7 +274,6 @@ class User{
     }
 
     async save_post(req,res){
-        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.save_post(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
@@ -336,7 +281,6 @@ class User{
     }
 
     async show_saved_post(req,res){
-        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.show_saved_post(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
@@ -344,7 +288,6 @@ class User{
     }
 
     async add_comment(req,res){
-        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.add_comment(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
@@ -352,7 +295,6 @@ class User{
     }
 
     async show_post_comments(req,res){
-        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.show_post_comments(request_data, (_response_data)=>{
             common.response(res, _response_data);
@@ -360,7 +302,6 @@ class User{
     }
 
     async delete_posts(req,res){
-        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.delete_posts(request_data, (_response_data)=>{
             common.response(res, _response_data);
@@ -369,14 +310,10 @@ class User{
 
     async change_pswd(req,res){
         try{
-            localizify.setLocale(req.userLang);
             var request_data = req.body;
 
-            var rules = {
-                user_id: "required",
-                old_password: "required|min:8",
-                new_password: "required|min:8"
-            }
+            var rules = vrules.change_pswd;
+
             var message = {
                 required: t('required'),
                 'old_password.min': t('passwords_min'),
@@ -404,7 +341,6 @@ class User{
     }
 
     async edit_profile(req,res){
-        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.edit_profile(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
@@ -413,12 +349,10 @@ class User{
 
     async contact_us(req,res){
         try{
-            localizify.setLocale(req.userLang);
             var request_data = req.body;
 
-            var rules = {
-                email_id: "required|email"
-            }
+            var rules = vrules.contact_us;
+
             var message = {
                 required: t('required'),
                 email: t('email')
@@ -443,7 +377,6 @@ class User{
     }
 
     async report_post(req,res){
-        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.report_post(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
@@ -451,7 +384,6 @@ class User{
     }
 
     async report_profile(req,res){
-        localizify.setLocale(req.userLang)
         var request_data = req.body;
         userModel.report_profile(request_data, request_data.user_id, (_response_data)=>{
             common.response(res, _response_data);
@@ -459,7 +391,6 @@ class User{
     }
 
     async list_categories(req,res){
-        localizify.setLocale(req.userLang);
         var request_data = req.body;
         userModel.list_categories(request_data, (_response_data)=>{
             common.response(res, _response_data);
@@ -467,7 +398,6 @@ class User{
     }
     
     async filter_post_category(req,res){
-        localizify.setLocale(req.userLang);
         var request_data = req.body;
         userModel.filter_post_category(request_data, (_response_data)=>{
             common.response(res, _response_data);

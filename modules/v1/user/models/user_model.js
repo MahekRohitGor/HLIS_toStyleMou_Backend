@@ -3,22 +3,12 @@ const database = require("../../../../config/database");
 const response_code = require("../../../../utilities/response-error-code");
 const md5 = require("md5");
 const {default: localizify} = require('localizify');
-const en = require("../../../../language/en");
-const fr = require("../../../../language/fr");
-const guj = require("../../../../language/guj");
-const validator = require("../../../../middlewares/validator");
-
 const { t } = require('localizify');
 
-localizify
-    .add("en", en)
-    .add("fr", fr)
-    .add("guj", guj);
 
 class userModel {
     async signup(request_data, callback) {
         try {
-            localizify.setLocale(request_data.userLang);
             const data = {
                 user_name: request_data.user_name,
                 email_id: request_data.email_id,
