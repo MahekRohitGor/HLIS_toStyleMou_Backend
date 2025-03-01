@@ -44,7 +44,6 @@ class User{
     async login(req,res){
         try{
             var request_data = req.body;
-
             var rules = vrules.login;
 
             var message = {
