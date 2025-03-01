@@ -181,7 +181,6 @@ class User{
     async add_post(req,res){
         try{
             var request_data = req.body;
-
             var rules = vrules.add_post;
 
             var message = {
@@ -210,7 +209,6 @@ class User{
                 message: t('rest_keywords_something_went_wrong')
             });
         }
-        
     }
 
     async get_post_ranks(req,res){
